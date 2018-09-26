@@ -37,7 +37,7 @@ public class Main {
     private static AdvancedFile MINECRAFT_SCRIPTS_FOLDER = null;
     private static AdvancedFile MINECRAFT_RESOURCES_FOLDER = null;
     
-    public static final void main(String[] args) {
+    public static final void main(String[] args) { //TODO Maybe create a reusable log file? A log file, which contains every operation done by this program, so it can be easily reversed when needed
         Logger.log("This is the " + Main.class.getSimpleName() + " class", LogLevel.FINEST);
         if (args != null) {
             if (args.length > 0) {
