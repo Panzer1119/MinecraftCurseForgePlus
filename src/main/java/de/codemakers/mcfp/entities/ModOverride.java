@@ -147,9 +147,6 @@ public class ModOverride extends AbstractOverride {
                     advancedFile_without_suffix_2 = advancedFile;
                     advancedFile_with_suffix_2 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
                 }
-                /*if (advancedFile_with_suffix_2.exists()) {
-                    //return false; //Nice try, but we have to ensure, that the file is really not existing
-                }*/
                 if (!advancedFile_without_suffix_2.exists()) {
                     return true;
                 }
@@ -160,7 +157,6 @@ public class ModOverride extends AbstractOverride {
                         return false;
                     }
                 }
-                //if (overridePolicy == OverridePolicy.FORCE || !advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
                 data = advancedFile_without_suffix_2.readBytes();
                 if (advancedFile_with_suffix_2.writeBytes(data)) {
                     checkHash(advancedFile_with_suffix_2.readBytes(), HashUtil.hashSHA256(data), true);
@@ -168,7 +164,6 @@ public class ModOverride extends AbstractOverride {
                 } else {
                     return false;
                 }
-                //}
             case CHANGE:
                 throw new NotYetImplementedRuntimeException("Maybe never?");
             case UNKNOWN:
