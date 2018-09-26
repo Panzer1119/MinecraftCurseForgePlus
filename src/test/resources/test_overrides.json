@@ -9,6 +9,7 @@
     {
       "overrideAction": "REPLACE",
       "file": "file_1.txt",
+	  "url": "http://192.168.6.138/minecraft/mods/file_2.txt",
       "file_2": "file_2.txt"
     }
   ]

@@ -17,9 +17,13 @@
 
 package de.codemakers.mcfp;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.io.file.AdvancedFile;
+import de.codemakers.mcfp.entities.ModOverride;
+import de.codemakers.mcfp.entities.Overrides;
 
 public class Main {
     
@@ -35,15 +39,27 @@ public class Main {
     private static AdvancedFile MINECRAFT_RESOURCES_FOLDER = null;
     
     public static final void main(String[] args) {
-        if (args != null && args.length > 0) {
-            setMinecraftFolder(new AdvancedFile(args[0]));
-            Logger.log(String.format("Setted Minecraft Folder to \"%s\" (absolute: \"%s\")", getMinecraftFolder(), getMinecraftFolder().getAbsolutePath()), LogLevel.FINE);
-        }
         Logger.log("This is the " + Main.class.getSimpleName() + " class", LogLevel.FINEST);
-        Logger.log(String.format("Minecraft Mods Folder: \"%s\" (absolute: \"%s\")", getMinecraftModsFolder(), getMinecraftModsFolder().getAbsolutePath()), LogLevel.FINER);
-        Logger.log(String.format("Minecraft Config Folder: \"%s\" (absolute: \"%s\")", getMinecraftConfigFolder(), getMinecraftConfigFolder().getAbsolutePath()), LogLevel.FINER);
-        Logger.log(String.format("Minecraft Scripts Folder: \"%s\" (absolute: \"%s\")", getMinecraftScriptsFolder(), getMinecraftScriptsFolder().getAbsolutePath()), LogLevel.FINER);
-        Logger.log(String.format("Minecraft Resources Folder: \"%s\" (absolute: \"%s\")", getMinecraftResourcesFolder(), getMinecraftResourcesFolder().getAbsolutePath()), LogLevel.FINER);
+        if (args != null) {
+            if (args.length > 0) {
+                setMinecraftFolder(new AdvancedFile(args[0]));
+                Logger.log(String.format("Setted Minecraft Folder to \"%s\" (absolute: \"%s\")", getMinecraftFolder(), getMinecraftFolder().getAbsolutePath()), LogLevel.FINE);
+                Logger.log(String.format("Minecraft Mods Folder: \"%s\" (absolute: \"%s\")", getMinecraftModsFolder(), getMinecraftModsFolder().getAbsolutePath()), LogLevel.FINER);
+                Logger.log(String.format("Minecraft Config Folder: \"%s\" (absolute: \"%s\")", getMinecraftConfigFolder(), getMinecraftConfigFolder().getAbsolutePath()), LogLevel.FINER);
+                Logger.log(String.format("Minecraft Scripts Folder: \"%s\" (absolute: \"%s\")", getMinecraftScriptsFolder(), getMinecraftScriptsFolder().getAbsolutePath()), LogLevel.FINER);
+                Logger.log(String.format("Minecraft Resources Folder: \"%s\" (absolute: \"%s\")", getMinecraftResourcesFolder(), getMinecraftResourcesFolder().getAbsolutePath()), LogLevel.FINER);
+            }
+            if (args.length > 1) {
+                final AdvancedFile json = new AdvancedFile(args[1]);
+                Logger.log(String.format("json file: \"%s\" (absolute: \"%s\")", json, json.getAbsolutePath()), LogLevel.FINE);
+                final GsonBuilder gsonBuilder = new GsonBuilder();
+                final Gson gson = gsonBuilder.create();
+                final Overrides overrides = gson.fromJson(new String(json.readBytesWithoutException()), Overrides.class);
+                Logger.log(String.format("overrides: %s", overrides), LogLevel.FINE);
+                Logger.log(overrides.getModOverrides().get(0).isOverride(ModOverride.class), LogLevel.FINER);
+                Logger.log(overrides.getModOverrides().get(0).isOverride(ModOverride.class), LogLevel.FINER);
+            }
+        }
     }
     
     static void setMinecraftFolder(AdvancedFile advancedFile) {

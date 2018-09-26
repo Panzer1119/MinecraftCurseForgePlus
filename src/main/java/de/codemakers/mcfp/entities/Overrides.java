@@ -17,39 +17,56 @@
 
 package de.codemakers.mcfp.entities;
 
+import java.util.Base64;
 import java.util.List;
 
 public class Overrides {
     
-    protected String overallHash;
+    protected String hash;
     protected List<ModOverride> modOverrides;
     
-    public Overrides(String overallHash, List<ModOverride> modOverrides) {
-        this.overallHash = overallHash;
+    public Overrides(String hash, List<ModOverride> modOverrides) {
+        this.hash = hash;
         this.modOverrides = modOverrides;
     }
     
-    public final String getOverallHash() {
-        return overallHash;
+    public String getHash() {
+        return hash;
     }
     
-    public final Overrides setOverallHash(String overallHash) {
-        this.overallHash = overallHash;
+    public byte[] getHashAsBytes() {
+        if (hash == null) {
+            return null;
+        }
+        return Base64.getDecoder().decode(hash);
+    }
+    
+    public Overrides setHash(String hash) {
+        this.hash = hash;
         return this;
     }
     
-    public final List<ModOverride> getModOverrides() {
+    public Overrides setHashFromBytes(byte[] bytes) {
+        if (bytes == null) {
+            this.hash = null;
+        } else {
+            this.hash = Base64.getEncoder().encodeToString(bytes);
+        }
+        return this;
+    }
+    
+    public List<ModOverride> getModOverrides() {
         return modOverrides;
     }
     
-    public final Overrides setModOverrides(List<ModOverride> modOverrides) {
+    public Overrides setModOverrides(List<ModOverride> modOverrides) {
         this.modOverrides = modOverrides;
         return this;
     }
     
     @Override
     public String toString() {
-        return "Overrides{" + "overallHash='" + overallHash + '\'' + ", modOverrides=" + modOverrides + '}';
+        return "Overrides{" + "hash='" + hash + '\'' + ", modOverrides=" + modOverrides + '}';
     }
     
 }

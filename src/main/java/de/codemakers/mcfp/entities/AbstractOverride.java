@@ -17,17 +17,26 @@
 
 package de.codemakers.mcfp.entities;
 
+import de.codemakers.base.logger.Logger;
+import de.codemakers.security.util.HashUtil;
+import org.apache.commons.io.IOUtils;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.Objects;
 
 public abstract class AbstractOverride {
+    
+    public static final String SUFFIX_DISABLED = ".disabled";
     
     protected String hash;
     protected OverrideAction overrideAction;
     protected String file;
     protected String url;
     protected String data;
+    //temp
+    protected transient byte[] temp = null;
     
     public AbstractOverride(String hash, OverrideAction overrideAction, String file, String url, String data) {
         this.hash = hash;
@@ -41,12 +50,42 @@ public abstract class AbstractOverride {
     
     public abstract boolean performOverride() throws Exception;
     
-    public final String getHash() {
+    public boolean checkHash(byte[] data) {
+        return checkHash(data, false);
+    }
+    
+    public boolean checkHash(byte[] data, boolean throwException) {
+        if (!HashUtil.isDataValidSHA256(data, getHashAsBytes())) {
+            if (throwException) {
+                throw new IllegalArgumentException("the hash of the data does not match the given hash");
+            }
+            return false;
+        }
+        return true;
+    }
+    
+    public String getHash() {
         return hash;
     }
     
-    public final AbstractOverride setHash(String hash) {
+    public byte[] getHashAsBytes() {
+        if (hash == null) {
+            return HashUtil.hashSHA256(getDataOrDownload());
+        }
+        return Base64.getDecoder().decode(hash);
+    }
+    
+    public AbstractOverride setHash(String hash) {
         this.hash = hash;
+        return this;
+    }
+    
+    public AbstractOverride setHashFromBytes(byte[] bytes) {
+        if (bytes == null) {
+            this.hash = null;
+        } else {
+            this.hash = Base64.getEncoder().encodeToString(bytes);
+        }
         return this;
     }
     
@@ -76,17 +115,52 @@ public abstract class AbstractOverride {
         return url == null ? null : new URL(getUrl());
     }
     
+    public byte[] downloadUrl() {
+        if (url == null) {
+            return null;
+        }
+        try {
+            return IOUtils.toByteArray(toURL());
+        } catch (Exception ex) {
+            Logger.handleError(ex);
+            return null;
+        }
+    }
+    
     public AbstractOverride setUrl(String url) {
         this.url = url;
         return this;
     }
     
-    public final String getData() {
+    public String getData() {
         return data;
     }
     
-    public final AbstractOverride setData(String data) {
+    public byte[] getDataAsBytes() {
+        if (data == null) {
+            return null;
+        }
+        return Base64.getDecoder().decode(data);
+    }
+    
+    public byte[] getDataOrDownload() {
+        if (temp == null) {
+            temp = data == null ? downloadUrl() : getDataAsBytes();
+        }
+        return temp;
+    }
+    
+    public AbstractOverride setData(String data) {
         this.data = data;
+        return this;
+    }
+    
+    public AbstractOverride setDataFromBytes(byte[] bytes) {
+        if (bytes == null) {
+            this.data = null;
+        } else {
+            this.data = Base64.getEncoder().encodeToString(bytes);
+        }
         return this;
     }
     
