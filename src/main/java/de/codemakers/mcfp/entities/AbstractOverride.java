@@ -23,12 +23,14 @@ import java.util.Objects;
 
 public abstract class AbstractOverride {
     
+    protected String hash;
     protected OverrideAction overrideAction;
     protected String file;
     protected String url;
     protected String data;
     
-    public AbstractOverride(OverrideAction overrideAction, String file, String url, String data) {
+    public AbstractOverride(String hash, OverrideAction overrideAction, String file, String url, String data) {
+        this.hash = hash;
         this.overrideAction = overrideAction;
         this.file = file;
         this.url = url;
@@ -36,6 +38,17 @@ public abstract class AbstractOverride {
     }
     
     public abstract OverrideType getOverrideType();
+    
+    public abstract boolean performOverride() throws Exception;
+    
+    public final String getHash() {
+        return hash;
+    }
+    
+    public final AbstractOverride setHash(String hash) {
+        this.hash = hash;
+        return this;
+    }
     
     public OverrideAction getOverrideAction() {
         return overrideAction;
@@ -92,7 +105,7 @@ public abstract class AbstractOverride {
     
     @Override
     public String toString() {
-        return "AbstractOverride{" + "overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
+        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
     }
     
 }

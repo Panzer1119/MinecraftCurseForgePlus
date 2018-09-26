@@ -21,8 +21,8 @@ public class ModOverride extends AbstractOverride {
     
     protected String file_2;
     
-    public ModOverride(OverrideAction overrideAction, String file, String url, String data, String file_2) {
-        super(overrideAction, file, url, data);
+    public ModOverride(String hash, OverrideAction overrideAction, String file, String url, String data, String file_2) {
+        super(hash, overrideAction, file, url, data);
         this.file_2 = file_2;
     }
     
@@ -41,8 +41,26 @@ public class ModOverride extends AbstractOverride {
     }
     
     @Override
+    public boolean performOverride() throws Exception {
+        if (url != null && data != null) {
+            throw new IllegalArgumentException("url OR data is needed, not both");
+        }
+        if (isOverrideAction(OverrideAction.REPLACE)) {
+            if (file == null) {
+                throw new IllegalArgumentException("file may not be null");
+            } else if (file_2 == null) {
+                throw new IllegalArgumentException("file_2 may not be null");
+            } else if (url == null && data == null) {
+                throw new IllegalArgumentException("url or data may not be null");
+            }
+            
+        }
+        return false;
+    }
+    
+    @Override
     public String toString() {
-        return "ModOverride{" + "file='" + file + '\'' + ", file_2='" + file_2 + '\'' + ", overrideAction=" + overrideAction + ", url='" + url + '\'' + ", data=" + data + '}';
+        return "ModOverride{" + "file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
     }
     
 }
