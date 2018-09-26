@@ -17,6 +17,8 @@
 
 package de.codemakers.mcfp.entities;
 
+import java.util.Objects;
+
 public enum OverrideType {
     MOD("mod"),
     CONFIG("config"),
@@ -37,10 +39,11 @@ public enum OverrideType {
     
     public static final OverrideType ofType(String type) {
         for (OverrideType overrideType : values()) {
-            if (overrideType.getType().equals(type)) {
+            if (Objects.equals(overrideType.getType(), type)) {
                 return overrideType;
             }
         }
         return UNKNOWN;
     }
+    
 }

@@ -17,8 +17,30 @@
 
 package de.codemakers.mcfp.entities;
 
+import java.util.Objects;
+
 public enum OverridePolicy {
-    NONE,
-    ALLOW,
-    FORCE;
+    NONE(null),
+    ALLOW("allow"),
+    FORCE("force");
+    
+    private final String policy;
+    
+    OverridePolicy(String policy) {
+        this.policy = policy;
+    }
+    
+    public final String getPolicy() {
+        return policy;
+    }
+    
+    public static final OverridePolicy ofPolicy(String policy) {
+        for (OverridePolicy overridePolicy : values()) {
+            if (Objects.equals(overridePolicy.getPolicy(), policy)) {
+                return overridePolicy;
+            }
+        }
+        return NONE;
+    }
+    
 }

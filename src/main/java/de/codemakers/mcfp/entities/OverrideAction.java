@@ -17,6 +17,8 @@
 
 package de.codemakers.mcfp.entities;
 
+import java.util.Objects;
+
 public enum OverrideAction {
     ADD("add"),
     REMOVE("remove"),
@@ -38,7 +40,7 @@ public enum OverrideAction {
     
     public static final OverrideAction ofAction(String action) {
         for (OverrideAction overrideAction : values()) {
-            if (overrideAction.getAction().equals(action)) {
+            if (Objects.equals(overrideAction.getAction(), action)) {
                 return overrideAction;
             }
         }
