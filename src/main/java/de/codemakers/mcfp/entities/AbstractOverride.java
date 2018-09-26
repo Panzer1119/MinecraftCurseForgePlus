@@ -52,7 +52,13 @@ public abstract class AbstractOverride {
     
     public abstract OverrideType getOverrideType();
     
-    public abstract boolean performOverride(OverridePolicy overridePolicy) throws Exception;
+    abstract boolean performOverrideIntern(OverridePolicy overridePolicy) throws Exception;
+    
+    public boolean performOverride(OverridePolicy overridePolicy) throws Exception {
+        Objects.requireNonNull(overrideAction, "overrideAction may not be null");
+        Objects.requireNonNull(file, "file may not be null");
+        return performOverrideIntern(overridePolicy);
+    }
     
     public boolean performOverride(OverridePolicy overridePolicy, ToughConsumer<Throwable> failure) {
         try {

@@ -46,7 +46,7 @@ public class ModOverride extends AbstractOverride {
     }
     
     @Override
-    public boolean performOverride(OverridePolicy overridePolicy) throws Exception {
+    boolean performOverrideIntern(OverridePolicy overridePolicy) throws Exception {
         overridePolicy = getNonNullOverridePolicy(overridePolicy);
         if (url != null && data != null) {
             throw new IllegalArgumentException("url OR data is needed, not both");
