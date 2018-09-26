@@ -27,14 +27,14 @@ import de.codemakers.security.util.HashUtil;
 
 import java.util.Base64;
 
-public class ModOverride extends AbstractOverride {
+public class FileOverride extends AbstractOverride {
     
     public static boolean SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS = false;
     
     protected transient OverrideType overrideType = null;
     protected String file_2;
     
-    public ModOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String source, byte[] temp, String file_2) {
+    public FileOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String source, byte[] temp, String file_2) {
         super(hash, overridePolicy, overrideAction, file, source, temp);
         this.file_2 = file_2;
     }
@@ -43,14 +43,19 @@ public class ModOverride extends AbstractOverride {
         return file_2;
     }
     
-    public ModOverride setFile_2(String file_2) {
+    public FileOverride setFile_2(String file_2) {
         this.file_2 = file_2;
         return this;
     }
     
     @Override
     public OverrideType getOverrideType() {
-        return OverrideType.MOD;
+        return overrideType;
+    }
+    
+    public FileOverride setOverrideType(OverrideType overrideType) {
+        this.overrideType = overrideType;
+        return this;
     }
     
     @Override
@@ -190,7 +195,7 @@ public class ModOverride extends AbstractOverride {
     
     @Override
     public String toString() {
-        return "ModOverride{" + "file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + ", sourceType=" + sourceType + '}';
+        return "FileOverride{" + "overrideType=" + overrideType + ", file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + ", sourceType=" + sourceType + '}';
     }
     
 }

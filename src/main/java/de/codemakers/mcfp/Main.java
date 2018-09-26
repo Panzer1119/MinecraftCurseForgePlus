@@ -17,12 +17,10 @@
 
 package de.codemakers.mcfp;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.io.file.AdvancedFile;
-import de.codemakers.mcfp.entities.ModOverride;
+import de.codemakers.mcfp.entities.FileOverride;
 import de.codemakers.mcfp.entities.OverridePolicy;
 import de.codemakers.mcfp.entities.Overrides;
 
@@ -51,15 +49,11 @@ public class Main {
                 Logger.log(String.format("Minecraft Resources Folder: \"%s\" (absolute: \"%s\")", getMinecraftResourcesFolder(), getMinecraftResourcesFolder().getAbsolutePath()), LogLevel.FINER);
             }
             if (args.length > 1) {
-                ModOverride.SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS = true;
+                FileOverride.SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS = true; //TODO Debug only??
                 final AdvancedFile json = new AdvancedFile(args[1]);
-                Logger.log(String.format("json file: \"%s\" (absolute: \"%s\")", json, json.getAbsolutePath()), LogLevel.FINE);
-                final GsonBuilder gsonBuilder = new GsonBuilder();
-                final Gson gson = gsonBuilder.create();
-                final Overrides overrides = gson.fromJson(new String(json.readBytesWithoutException()), Overrides.class);
-                Logger.log(String.format("overrides: %s", overrides), LogLevel.FINE);
-                Logger.log(overrides.getModOverrides().get(0).isOverride(ModOverride.class), LogLevel.FINER);
-                Logger.log(overrides.getModOverrides().get(1).isOverride(ModOverride.class), LogLevel.FINER);
+                Logger.log(String.format("json file: \"%s\" (absolute: \"%s\")", json, json.getAbsolutePath()), LogLevel.FINE); //TODO Debug only
+                final Overrides overrides = Overrides.fromAdvancedFile(json);
+                Logger.log(String.format("Overrides: %s", overrides), LogLevel.FINE); //TODO Debug only
                 overrides.performOverridesWithoutException(OverridePolicy.ALLOW, false, (abstractOverride) -> Logger.log(String.format("Performed: %s", abstractOverride), LogLevel.FINE));
             }
         }

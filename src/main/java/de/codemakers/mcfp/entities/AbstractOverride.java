@@ -55,12 +55,12 @@ public abstract class AbstractOverride {
         init();
     }
     
-    public void init() {
+    public AbstractOverride init() {
         this.temp = null;
         if (sourceType == null) {
             if (source == null) {
                 sourceType = null;
-                return;
+                return this;
             }
             final Matcher matcher = SOURCE_REGEX_PATTERN.matcher(source);
             if (matcher.matches()) {
@@ -71,6 +71,7 @@ public abstract class AbstractOverride {
                 sourceType = SourceType.UNKNOWN;
             }
         }
+        return this;
     }
     
     public abstract OverrideType getOverrideType();
