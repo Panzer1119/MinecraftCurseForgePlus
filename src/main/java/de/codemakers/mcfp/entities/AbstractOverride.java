@@ -18,6 +18,7 @@
 package de.codemakers.mcfp.entities;
 
 import de.codemakers.base.logger.Logger;
+import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.security.util.HashUtil;
 import org.apache.commons.io.IOUtils;
 
@@ -31,6 +32,7 @@ public abstract class AbstractOverride {
     public static final String SUFFIX_DISABLED = ".disabled";
     
     protected String hash;
+    protected OverridePolicy overridePolicy;
     protected OverrideAction overrideAction;
     protected String file;
     protected String url;
@@ -38,17 +40,36 @@ public abstract class AbstractOverride {
     //temp
     protected transient byte[] temp = null;
     
-    public AbstractOverride(String hash, OverrideAction overrideAction, String file, String url, String data) {
+    public AbstractOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String url, String data, byte[] temp) {
         this.hash = hash;
+        this.overridePolicy = overridePolicy;
         this.overrideAction = overrideAction;
         this.file = file;
         this.url = url;
         this.data = data;
+        this.temp = temp;
     }
     
     public abstract OverrideType getOverrideType();
     
-    public abstract boolean performOverride() throws Exception;
+    public abstract boolean performOverride(OverridePolicy overridePolicy) throws Exception;
+    
+    public boolean performOverride(OverridePolicy overridePolicy, ToughConsumer<Throwable> failure) {
+        try {
+            return performOverride(getNonNullOverridePolicy(overridePolicy));
+        } catch (Exception ex) {
+            if (failure != null) {
+                failure.acceptWithoutException(ex);
+            } else {
+                Logger.handleError(ex);
+            }
+            return false;
+        }
+    }
+    
+    public boolean performOverrideWithoutException(OverridePolicy overridePolicy) {
+        return performOverride(getNonNullOverridePolicy(overridePolicy), null);
+    }
     
     public boolean checkHash(byte[] data) {
         return checkHash(data, false);
@@ -86,6 +107,19 @@ public abstract class AbstractOverride {
         } else {
             this.hash = Base64.getEncoder().encodeToString(bytes);
         }
+        return this;
+    }
+    
+    public OverridePolicy getNonNullOverridePolicy(OverridePolicy overridePolicy) {
+        return overridePolicy == null ? (getOverridePolicy() == null ? OverridePolicy.NONE : getOverridePolicy()) : overridePolicy;
+    }
+    
+    public OverridePolicy getOverridePolicy() {
+        return overridePolicy;
+    }
+    
+    public AbstractOverride setOverridePolicy(OverridePolicy overridePolicy) {
+        this.overridePolicy = overridePolicy;
         return this;
     }
     
@@ -179,7 +213,7 @@ public abstract class AbstractOverride {
     
     @Override
     public String toString() {
-        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
+        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
     }
     
 }

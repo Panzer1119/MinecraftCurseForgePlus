@@ -26,8 +26,8 @@ public class ModOverride extends AbstractOverride {
     
     protected String file_2;
     
-    public ModOverride(String hash, OverrideAction overrideAction, String file, String url, String data, String file_2) {
-        super(hash, overrideAction, file, url, data);
+    public ModOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String url, String data, byte[] temp, String file_2) {
+        super(hash, overridePolicy, overrideAction, file, url, data, temp);
         this.file_2 = file_2;
     }
     
@@ -46,7 +46,8 @@ public class ModOverride extends AbstractOverride {
     }
     
     @Override
-    public boolean performOverride() throws Exception {
+    public boolean performOverride(OverridePolicy overridePolicy) throws Exception {
+        overridePolicy = getNonNullOverridePolicy(overridePolicy);
         if (url != null && data != null) {
             throw new IllegalArgumentException("url OR data is needed, not both");
         }
@@ -69,23 +70,27 @@ public class ModOverride extends AbstractOverride {
         final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file);
         final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file_2);
         AdvancedFile advancedFile_temp = null;
-        if (advancedFile != null && !advancedFile.isFile()) {
-            throw new FileIsNotFileRuntimeException("file must be a file");
+        if (advancedFile != null && advancedFile.exists() && !advancedFile.isFile()) {
+            throw new FileIsNotFileRuntimeException(advancedFile.getAbsolutePath() + " has to be a file");
         }
-        if (advancedFile_2 != null && !advancedFile_2.isFile()) {
-            throw new FileIsNotFileRuntimeException("file_2 must be a file");
+        if (advancedFile_2 != null && advancedFile_2.exists() && !advancedFile_2.isFile()) {
+            throw new FileIsNotFileRuntimeException(advancedFile_2.getAbsolutePath() + " has to be a file");
         }
         switch (getOverrideAction()) {
             case ADD:
-                if (advancedFile.exists() && checkHash(advancedFile.readBytes())) {
-                    return true;
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile.exists()) {
+                    if (checkHash(advancedFile.readBytes())) {
+                        return true;
+                    } else if (overridePolicy != OverridePolicy.ALLOW) {
+                        return false;
+                    }
                 }
                 if (advancedFile.writeBytes(data)) {
                     return checkHash(advancedFile.readBytes(), true);
                 }
                 break;
             case REMOVE:
-                if (!advancedFile.exists()) {
+                if (overridePolicy != OverridePolicy.FORCE && !advancedFile.exists()) {
                     return true;
                 }
                 return advancedFile.delete();
@@ -93,8 +98,12 @@ public class ModOverride extends AbstractOverride {
                 if (advancedFile.exists() && !advancedFile.delete()) {
                     return false;
                 }
-                if (advancedFile_2.exists() && checkHash(advancedFile_2.readBytes())) {
-                    return true;
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile_2.exists()) {
+                    if (checkHash(advancedFile_2.readBytes())) {
+                        return true;
+                    } else if (overridePolicy != OverridePolicy.ALLOW) {
+                        return false;
+                    }
                 }
                 if (advancedFile_2.writeBytes(data)) {
                     return checkHash(advancedFile_2.readBytes(), true);
@@ -106,15 +115,22 @@ public class ModOverride extends AbstractOverride {
                 }
                 if (advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED)) {
                     advancedFile_temp = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length()));
-                    if (!advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
-                        data = advancedFile.readBytes();
-                        if (advancedFile_temp.writeBytes(data)) {
-                            return checkHash(advancedFile_temp.readBytes(), true);
-                        } else {
+                    if (overridePolicy != OverridePolicy.FORCE && advancedFile_temp.exists()) {
+                        if (checkHash(advancedFile_temp.readBytes())) {
+                            return advancedFile.delete();
+                        } else if (overridePolicy != OverridePolicy.ALLOW) {
                             return false;
                         }
                     }
-                    return advancedFile.delete();
+                    //if (overridePolicy == OverridePolicy.FORCE || !advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
+                    data = advancedFile.readBytes();
+                    if (advancedFile_temp.writeBytes(data)) {
+                        checkHash(advancedFile_temp.readBytes(), true);
+                        return advancedFile.delete();
+                    } else {
+                        return false;
+                    }
+                    //}
                 }
                 return checkHash(advancedFile.readBytes(), true);
             case DISABLE:
@@ -122,15 +138,22 @@ public class ModOverride extends AbstractOverride {
                     return true;
                 }
                 advancedFile_temp = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
-                if (!advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
-                    data = advancedFile.readBytes();
-                    if (advancedFile_temp.writeBytes(data)) {
-                        return checkHash(advancedFile_temp.readBytes(), true);
-                    } else {
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile_temp.exists()) {
+                    if (checkHash(advancedFile_temp.readBytes())) {
+                        return advancedFile.delete();
+                    } else if (overridePolicy != OverridePolicy.ALLOW) {
                         return false;
                     }
                 }
-                return advancedFile.delete();
+                //if (overridePolicy == OverridePolicy.FORCE || !advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
+                data = advancedFile.readBytes();
+                if (advancedFile_temp.writeBytes(data)) {
+                    checkHash(advancedFile_temp.readBytes(), true);
+                    return advancedFile.delete();
+                } else {
+                    return false;
+                }
+                //}
             case CHANGE:
                 throw new NotYetImplementedRuntimeException("Maybe never?");
             case UNKNOWN:
@@ -142,7 +165,7 @@ public class ModOverride extends AbstractOverride {
     
     @Override
     public String toString() {
-        return "ModOverride{" + "file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
+        return "ModOverride{" + "file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
     }
     
 }

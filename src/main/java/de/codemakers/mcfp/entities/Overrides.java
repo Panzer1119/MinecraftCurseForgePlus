@@ -17,6 +17,7 @@
 
 package de.codemakers.mcfp.entities;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
@@ -24,6 +25,8 @@ public class Overrides {
     
     protected String hash;
     protected List<ModOverride> modOverrides;
+    //temp
+    protected transient List<AbstractOverride> overrides = null;
     
     public Overrides(String hash, List<ModOverride> modOverrides) {
         this.hash = hash;
@@ -56,12 +59,23 @@ public class Overrides {
     }
     
     public List<ModOverride> getModOverrides() {
+        this.overrides = null;
         return modOverrides;
     }
     
     public Overrides setModOverrides(List<ModOverride> modOverrides) {
         this.modOverrides = modOverrides;
+        this.overrides = null;
         return this;
+    }
+    
+    public List<AbstractOverride> getOverrides() {
+        if (overrides == null) {
+            overrides = new ArrayList<>();
+            overrides.addAll(getModOverrides());
+            //TODO Add the config, scripts and resource overrides
+        }
+        return overrides;
     }
     
     @Override

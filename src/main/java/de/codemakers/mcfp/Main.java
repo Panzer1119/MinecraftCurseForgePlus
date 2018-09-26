@@ -23,6 +23,7 @@ import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.mcfp.entities.ModOverride;
+import de.codemakers.mcfp.entities.OverridePolicy;
 import de.codemakers.mcfp.entities.Overrides;
 
 public class Main {
@@ -57,7 +58,12 @@ public class Main {
                 final Overrides overrides = gson.fromJson(new String(json.readBytesWithoutException()), Overrides.class);
                 Logger.log(String.format("overrides: %s", overrides), LogLevel.FINE);
                 Logger.log(overrides.getModOverrides().get(0).isOverride(ModOverride.class), LogLevel.FINER);
-                Logger.log(overrides.getModOverrides().get(0).isOverride(ModOverride.class), LogLevel.FINER);
+                Logger.log(overrides.getModOverrides().get(1).isOverride(ModOverride.class), LogLevel.FINER);
+                overrides.getModOverrides().forEach((modOverride) -> {
+                    if (modOverride.performOverrideWithoutException(OverridePolicy.ALLOW)) {
+                        Logger.log(String.format("Performed: %s", modOverride), LogLevel.FINE);
+                    }
+                });
             }
         }
     }
