@@ -59,11 +59,7 @@ public class Main {
                 Logger.log(String.format("overrides: %s", overrides), LogLevel.FINE);
                 Logger.log(overrides.getModOverrides().get(0).isOverride(ModOverride.class), LogLevel.FINER);
                 Logger.log(overrides.getModOverrides().get(1).isOverride(ModOverride.class), LogLevel.FINER);
-                overrides.getModOverrides().forEach((modOverride) -> {
-                    if (modOverride.performOverrideWithoutException(OverridePolicy.ALLOW)) {
-                        Logger.log(String.format("Performed: %s", modOverride), LogLevel.FINE);
-                    }
-                });
+                overrides.performOverridesWithoutException(OverridePolicy.ALLOW, false, (abstractOverride) -> Logger.log(String.format("Performed: %s", abstractOverride), LogLevel.FINE));
             }
         }
     }

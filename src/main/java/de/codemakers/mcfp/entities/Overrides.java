@@ -17,6 +17,9 @@
 
 package de.codemakers.mcfp.entities;
 
+import de.codemakers.base.logger.Logger;
+import de.codemakers.base.util.tough.ToughConsumer;
+
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -71,11 +74,42 @@ public class Overrides {
     
     public List<AbstractOverride> getOverrides() {
         if (overrides == null) {
-            overrides = new ArrayList<>();
-            overrides.addAll(getModOverrides());
+            final List<AbstractOverride> temp = new ArrayList<>();
+            temp.addAll(getModOverrides());
             //TODO Add the config, scripts and resource overrides
+            overrides = temp;
         }
         return overrides;
+    }
+    
+    public boolean performOverrides(OverridePolicy overridePolicy, boolean returnOnFailedOverrides, ToughConsumer<AbstractOverride> successfulOverride) throws Exception {
+        for (AbstractOverride abstractOverride : getOverrides()) {
+            if (!abstractOverride.performOverride(overridePolicy)) {
+                if (returnOnFailedOverrides) {
+                    return false;
+                }
+            } else if (successfulOverride != null) {
+                successfulOverride.acceptWithoutException(abstractOverride);
+            }
+        }
+        return true;
+    }
+    
+    public boolean performOverrides(OverridePolicy overridePolicy, boolean returnOnFailedOverrides, ToughConsumer<AbstractOverride> successfulOverride, ToughConsumer<Throwable> failure) {
+        try {
+            return performOverrides(overridePolicy, returnOnFailedOverrides, successfulOverride);
+        } catch (Exception ex) {
+            if (failure != null) {
+                failure.acceptWithoutException(ex);
+            } else {
+                Logger.handleError(ex);
+            }
+            return false;
+        }
+    }
+    
+    public boolean performOverridesWithoutException(OverridePolicy overridePolicy, boolean returnOnFailedOverrides, ToughConsumer<AbstractOverride> successfulOverride) {
+        return performOverrides(overridePolicy, returnOnFailedOverrides, successfulOverride, null);
     }
     
     @Override

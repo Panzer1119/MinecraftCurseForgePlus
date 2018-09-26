@@ -21,6 +21,7 @@ import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
 import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.io.file.exceptions.isnot.FileIsNotFileRuntimeException;
 import de.codemakers.mcfp.Main;
+import de.codemakers.security.util.HashUtil;
 
 public class ModOverride extends AbstractOverride {
     
@@ -107,46 +108,63 @@ public class ModOverride extends AbstractOverride {
                 }
                 break;
             case ENABLE:
-                if (!advancedFile.exists()) {
-                    return false;
-                }
+                AdvancedFile advancedFile_with_suffix_1 = null;
+                AdvancedFile advancedFile_without_suffix_1 = null;
                 if (advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED)) {
-                    advancedFile_temp = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length()));
-                    if (overridePolicy != OverridePolicy.FORCE && advancedFile_temp.exists()) {
-                        if (checkHash(advancedFile_temp.readBytes())) {
-                            return advancedFile.delete();
-                        } else if (overridePolicy != OverridePolicy.ALLOW) {
-                            return false;
-                        }
-                    }
-                    //if (overridePolicy == OverridePolicy.FORCE || !advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
-                    data = advancedFile.readBytes();
-                    if (advancedFile_temp.writeBytes(data)) {
-                        checkHash(advancedFile_temp.readBytes(), true);
-                        return advancedFile.delete();
-                    } else {
-                        return false;
-                    }
-                    //}
+                    advancedFile_with_suffix_1 = advancedFile;
+                    advancedFile_without_suffix_1 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length()));
+                } else {
+                    advancedFile_without_suffix_1 = advancedFile;
+                    advancedFile_with_suffix_1 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
                 }
-                return checkHash(advancedFile.readBytes(), true);
-            case DISABLE:
-                if (!advancedFile.exists()) {
+                if (advancedFile_without_suffix_1.exists() && checkHash(advancedFile_without_suffix_1.readBytes())) {
                     return true;
                 }
-                advancedFile_temp = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
-                if (overridePolicy != OverridePolicy.FORCE && advancedFile_temp.exists()) {
-                    if (checkHash(advancedFile_temp.readBytes())) {
-                        return advancedFile.delete();
+                if (!advancedFile_with_suffix_1.exists()) {
+                    return false;
+                }
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile_without_suffix_1.exists()) {
+                    if (checkHash(advancedFile_without_suffix_1.readBytes())) {
+                        return advancedFile_with_suffix_1.delete();
+                    } else if (overridePolicy != OverridePolicy.ALLOW) {
+                        return false;
+                    }
+                }
+                data = advancedFile_with_suffix_1.readBytes();
+                if (advancedFile_without_suffix_1.writeBytes(data)) {
+                    checkHash(advancedFile_without_suffix_1.readBytes(), HashUtil.hashSHA256(data), true);
+                    return advancedFile_with_suffix_1.delete();
+                } else {
+                    return false;
+                }
+            case DISABLE:
+                AdvancedFile advancedFile_with_suffix_2 = null;
+                AdvancedFile advancedFile_without_suffix_2 = null;
+                if (advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED)) {
+                    advancedFile_with_suffix_2 = advancedFile;
+                    advancedFile_without_suffix_2 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length()));
+                } else {
+                    advancedFile_without_suffix_2 = advancedFile;
+                    advancedFile_with_suffix_2 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
+                }
+                /*if (advancedFile_with_suffix_2.exists()) {
+                    //return false; //Nice try, but we have to ensure, that the file is really not existing
+                }*/
+                if (!advancedFile_without_suffix_2.exists()) {
+                    return true;
+                }
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile_with_suffix_2.exists()) {
+                    if (checkHash(advancedFile_with_suffix_2.readBytes())) {
+                        return advancedFile_without_suffix_2.delete();
                     } else if (overridePolicy != OverridePolicy.ALLOW) {
                         return false;
                     }
                 }
                 //if (overridePolicy == OverridePolicy.FORCE || !advancedFile_temp.exists() || !checkHash(advancedFile_temp.readBytes())) {
-                data = advancedFile.readBytes();
-                if (advancedFile_temp.writeBytes(data)) {
-                    checkHash(advancedFile_temp.readBytes(), true);
-                    return advancedFile.delete();
+                data = advancedFile_without_suffix_2.readBytes();
+                if (advancedFile_with_suffix_2.writeBytes(data)) {
+                    checkHash(advancedFile_with_suffix_2.readBytes(), HashUtil.hashSHA256(data), true);
+                    return advancedFile_without_suffix_2.delete();
                 } else {
                     return false;
                 }

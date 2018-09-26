@@ -105,14 +105,18 @@ public abstract class AbstractOverride {
         return checkHash(data, false);
     }
     
-    public boolean checkHash(byte[] data, boolean throwException) {
-        if (!HashUtil.isDataValidSHA256(data, getHashAsBytes())) {
+    public boolean checkHash(byte[] data, byte[] hash, boolean throwException) {
+        if (!HashUtil.isDataValidSHA256(data, hash)) {
             if (throwException) {
                 throw new IllegalArgumentException("the hash of the data does not match the given hash");
             }
             return false;
         }
         return true;
+    }
+    
+    public boolean checkHash(byte[] data, boolean throwException) {
+        return checkHash(data, getHashAsBytes(), throwException);
     }
     
     public String getHash() {
