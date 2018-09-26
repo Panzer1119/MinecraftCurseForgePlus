@@ -17,6 +17,7 @@
 
 package de.codemakers.mcfp.entities;
 
+import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.util.tough.ToughConsumer;
 import de.codemakers.security.util.HashUtil;
@@ -26,28 +27,50 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class AbstractOverride {
     
     public static final String SUFFIX_DISABLED = ".disabled";
+    public static final String SOURCE_REGEX_STRING = "(" + SourceType.URL.getType() + "|" + SourceType.FILE.getType() + "|" + SourceType.DATA.getType() + "):(.+)";
+    public static final Pattern SOURCE_REGEX_PATTERN = Pattern.compile(SOURCE_REGEX_STRING);
     
     protected String hash;
     protected OverridePolicy overridePolicy;
     protected OverrideAction overrideAction;
     protected String file;
-    protected String url;
-    protected String data;
+    protected String source = null;
+    protected transient SourceType sourceType = null;
     //temp
     protected transient byte[] temp = null;
     
-    public AbstractOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String url, String data, byte[] temp) {
+    public AbstractOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String source, byte[] temp) {
         this.hash = hash;
         this.overridePolicy = overridePolicy;
         this.overrideAction = overrideAction;
         this.file = file;
-        this.url = url;
-        this.data = data;
+        this.source = source;
         this.temp = temp;
+        init();
+    }
+    
+    public void init() {
+        this.temp = null;
+        if (sourceType == null) {
+            if (source == null) {
+                sourceType = null;
+                return;
+            }
+            final Matcher matcher = SOURCE_REGEX_PATTERN.matcher(source);
+            if (matcher.matches()) {
+                sourceType = SourceType.ofType(matcher.group(1));
+                source = matcher.group(2);
+            } else {
+                Logger.log(String.format("Found no %s for \"%s\"", SourceType.class.getSimpleName(), source), LogLevel.WARNING);
+                sourceType = SourceType.UNKNOWN;
+            }
+        }
     }
     
     public abstract OverrideType getOverrideType();
@@ -57,6 +80,7 @@ public abstract class AbstractOverride {
     public boolean performOverride(OverridePolicy overridePolicy) throws Exception {
         Objects.requireNonNull(overrideAction, "overrideAction may not be null");
         Objects.requireNonNull(file, "file may not be null");
+        init();
         return performOverrideIntern(overridePolicy);
     }
     
@@ -97,7 +121,7 @@ public abstract class AbstractOverride {
     
     public byte[] getHashAsBytes() {
         if (hash == null) {
-            return HashUtil.hashSHA256(getDataOrDownload());
+            return HashUtil.hashSHA256(resolveSource());
         }
         return Base64.getDecoder().decode(hash);
     }
@@ -147,61 +171,98 @@ public abstract class AbstractOverride {
         return this;
     }
     
-    public String getUrl() {
-        return url;
+    public final String getSource() {
+        return source;
     }
     
-    public URL toURL() throws MalformedURLException {
-        return url == null ? null : new URL(getUrl());
+    public final AbstractOverride setSource(String source) {
+        this.source = source;
+        this.sourceType = null;
+        this.temp = null;
+        init();
+        return this;
     }
     
-    public byte[] downloadUrl() {
-        if (url == null) {
+    public AbstractOverride setURLAsSource(String url) {
+        this.source = url;
+        this.sourceType = SourceType.URL;
+        this.temp = null;
+        return this;
+    }
+    
+    public AbstractOverride setDataAsSource(byte[] bytes) {
+        if (bytes == null) {
+            this.source = null;
+        } else {
+            this.source = Base64.getEncoder().encodeToString(bytes);
+        }
+        this.sourceType = SourceType.DATA;
+        this.temp = null;
+        return this;
+    }
+    
+    public AbstractOverride setFileAsSource(String file) {
+        this.source = file;
+        this.sourceType = SourceType.FILE;
+        this.temp = null;
+        return this;
+    }
+    
+    public URL sourceToURL() throws MalformedURLException {
+        if (source == null || sourceType != SourceType.URL) {
+            return null;
+        }
+        return new URL(source);
+    }
+    
+    public byte[] getSourceFromURL() {
+        if (source == null || sourceType != SourceType.URL) {
             return null;
         }
         try {
-            return IOUtils.toByteArray(toURL());
+            return IOUtils.toByteArray(sourceToURL());
         } catch (Exception ex) {
             Logger.handleError(ex);
             return null;
         }
     }
     
-    public AbstractOverride setUrl(String url) {
-        this.url = url;
-        return this;
-    }
-    
-    public String getData() {
-        return data;
-    }
-    
-    public byte[] getDataAsBytes() {
-        if (data == null) {
+    public byte[] getSourceFromData() {
+        if (source == null || sourceType != SourceType.DATA) {
             return null;
         }
-        return Base64.getDecoder().decode(data);
+        return Base64.getDecoder().decode(source);
     }
     
-    public byte[] getDataOrDownload() {
+    abstract byte[] getSourceFromFileIntern(String file);
+    
+    public byte[] getSourceFromFile() {
+        if (source == null || sourceType != SourceType.FILE) {
+            return null;
+        }
+        return getSourceFromFileIntern(source);
+    }
+    
+    public byte[] resolveSource() {
         if (temp == null) {
-            temp = data == null ? downloadUrl() : getDataAsBytes();
+            if (source == null) {
+                return null;
+            }
+            switch (sourceType) {
+                case URL:
+                    temp = getSourceFromURL();
+                    break;
+                case FILE:
+                    temp = getSourceFromFile();
+                    break;
+                case DATA:
+                    temp = getSourceFromData();
+                    break;
+                case UNKNOWN:
+                    return null;
+            }
         }
         return temp;
-    }
-    
-    public AbstractOverride setData(String data) {
-        this.data = data;
-        return this;
-    }
-    
-    public AbstractOverride setDataFromBytes(byte[] bytes) {
-        if (bytes == null) {
-            this.data = null;
-        } else {
-            this.data = Base64.getEncoder().encodeToString(bytes);
-        }
-        return this;
     }
     
     public boolean isOverrideType(OverrideType overrideType) {
@@ -219,7 +280,7 @@ public abstract class AbstractOverride {
     
     @Override
     public String toString() {
-        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
+        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + ", sourceType=" + sourceType + '}';
     }
     
 }

@@ -26,8 +26,8 @@ public class ModOverride extends AbstractOverride {
     
     protected String file_2;
     
-    public ModOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String url, String data, byte[] temp, String file_2) {
-        super(hash, overridePolicy, overrideAction, file, url, data, temp);
+    public ModOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String source, byte[] temp, String file_2) {
+        super(hash, overridePolicy, overrideAction, file, source, temp);
         this.file_2 = file_2;
     }
     
@@ -48,17 +48,14 @@ public class ModOverride extends AbstractOverride {
     @Override
     boolean performOverrideIntern(OverridePolicy overridePolicy) throws Exception {
         overridePolicy = getNonNullOverridePolicy(overridePolicy);
-        if (url != null && data != null) {
-            throw new IllegalArgumentException("url OR data is needed, not both");
-        }
         if (file == null) {
             throw new IllegalArgumentException("file may not be null");
         }
         boolean needsData = false;
         if (isOverrideAction(OverrideAction.REPLACE) || isOverrideAction(OverrideAction.ADD) || isOverrideAction(OverrideAction.CHANGE)) {
             needsData = true;
-            if (url == null && data == null) {
-                throw new IllegalArgumentException("url or data may not be null");
+            if (source == null) {
+                throw new IllegalArgumentException("source may not be null");
             }
             if (isOverrideAction(OverrideAction.REPLACE)) {
                 if (file_2 == null) {
@@ -66,7 +63,7 @@ public class ModOverride extends AbstractOverride {
                 }
             }
         }
-        byte[] data = needsData ? getDataOrDownload() : null;
+        byte[] data = needsData ? resolveSource() : null;
         final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file);
         final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file_2);
         AdvancedFile advancedFile_temp = null;
@@ -164,8 +161,13 @@ public class ModOverride extends AbstractOverride {
     }
     
     @Override
+    byte[] getSourceFromFileIntern(String file) {
+        return new AdvancedFile(Main.getMinecraftModsFolder(), file).readBytesWithoutException();
+    }
+    
+    @Override
     public String toString() {
-        return "ModOverride{" + "file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", url='" + url + '\'' + ", data='" + data + '\'' + '}';
+        return "ModOverride{" + "file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + ", sourceType=" + sourceType + '}';
     }
     
 }
