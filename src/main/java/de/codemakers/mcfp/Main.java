@@ -39,7 +39,11 @@ public class Main {
             setMinecraftFolder(new AdvancedFile(args[0]));
             Logger.log(String.format("Setted Minecraft Folder to \"%s\" (absolute: \"%s\")", getMinecraftFolder(), getMinecraftFolder().getAbsolutePath()), LogLevel.FINE);
         }
-        System.out.println("This is the " + Main.class.getSimpleName() + " class");
+        Logger.log("This is the " + Main.class.getSimpleName() + " class", LogLevel.FINEST);
+        Logger.log(String.format("Minecraft Mods Folder: \"%s\" (absolute: \"%s\")", getMinecraftModsFolder(), getMinecraftModsFolder().getAbsolutePath()), LogLevel.FINER);
+        Logger.log(String.format("Minecraft Config Folder: \"%s\" (absolute: \"%s\")", getMinecraftConfigFolder(), getMinecraftConfigFolder().getAbsolutePath()), LogLevel.FINER);
+        Logger.log(String.format("Minecraft Scripts Folder: \"%s\" (absolute: \"%s\")", getMinecraftScriptsFolder(), getMinecraftScriptsFolder().getAbsolutePath()), LogLevel.FINER);
+        Logger.log(String.format("Minecraft Resources Folder: \"%s\" (absolute: \"%s\")", getMinecraftResourcesFolder(), getMinecraftResourcesFolder().getAbsolutePath()), LogLevel.FINER);
     }
     
     static void setMinecraftFolder(AdvancedFile advancedFile) {
