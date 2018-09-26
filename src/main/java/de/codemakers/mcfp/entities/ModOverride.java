@@ -18,13 +18,20 @@
 package de.codemakers.mcfp.entities;
 
 import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
+import de.codemakers.base.logger.LogLevel;
+import de.codemakers.base.logger.Logger;
 import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.io.file.exceptions.isnot.FileIsNotFileRuntimeException;
 import de.codemakers.mcfp.Main;
 import de.codemakers.security.util.HashUtil;
 
+import java.util.Base64;
+
 public class ModOverride extends AbstractOverride {
     
+    public static boolean SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS = false;
+    
+    protected transient OverrideType overrideType = null;
     protected String file_2;
     
     public ModOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String source, byte[] temp, String file_2) {
@@ -90,6 +97,9 @@ public class ModOverride extends AbstractOverride {
             case REMOVE:
                 if (overridePolicy != OverridePolicy.FORCE && !advancedFile.exists()) {
                     return true;
+                }
+                if (SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS && advancedFile.exists()) {
+                    Logger.log(String.format("%s is removing \"%s\", this is the content of the file encoded with base64: %s", this, advancedFile.getAbsolutePath(), Base64.getEncoder().encodeToString(advancedFile.readBytesWithoutException())), LogLevel.FINE);
                 }
                 return advancedFile.delete();
             case REPLACE:

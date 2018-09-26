@@ -51,6 +51,7 @@ public class Main {
                 Logger.log(String.format("Minecraft Resources Folder: \"%s\" (absolute: \"%s\")", getMinecraftResourcesFolder(), getMinecraftResourcesFolder().getAbsolutePath()), LogLevel.FINER);
             }
             if (args.length > 1) {
+                ModOverride.SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS = true;
                 final AdvancedFile json = new AdvancedFile(args[1]);
                 Logger.log(String.format("json file: \"%s\" (absolute: \"%s\")", json, json.getAbsolutePath()), LogLevel.FINE);
                 final GsonBuilder gsonBuilder = new GsonBuilder();
