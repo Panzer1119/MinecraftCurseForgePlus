@@ -23,6 +23,7 @@ import de.codemakers.base.logger.Logger;
 import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.io.file.exceptions.isnot.FileIsNotFileRuntimeException;
 import de.codemakers.mcfp.Main;
+import de.codemakers.mcfp.util.Log;
 import de.codemakers.security.util.HashUtil;
 
 import java.util.Base64;
@@ -76,7 +77,7 @@ public class FileOverride extends AbstractOverride {
                 }
             }
         }
-        byte[] data = needsData ? resolveSource() : null;
+        final byte[] data = needsData ? resolveSource() : null;
         final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file);
         final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file_2);
         AdvancedFile advancedFile_temp = null;
@@ -95,6 +96,7 @@ public class FileOverride extends AbstractOverride {
                         return false;
                     }
                 }
+                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data);
                 if (advancedFile.writeBytes(data)) {
                     return checkHash(advancedFile.readBytes(), true);
                 }
@@ -106,8 +108,10 @@ public class FileOverride extends AbstractOverride {
                 if (SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS && advancedFile.exists()) {
                     Logger.log(String.format("%s is removing \"%s\", this is the content of the file encoded with base64: %s", this, advancedFile.getAbsolutePath(), Base64.getEncoder().encodeToString(advancedFile.readBytesWithoutException())), LogLevel.FINE);
                 }
+                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> null);
                 return advancedFile.delete();
             case REPLACE:
+                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> null);
                 if (advancedFile.exists() && !advancedFile.delete()) {
                     return false;
                 }
@@ -118,20 +122,15 @@ public class FileOverride extends AbstractOverride {
                         return false;
                     }
                 }
+                Log.addActionIfEnabled(advancedFile_2, () -> (advancedFile_2.exists() ? advancedFile_2.readBytes() : null), () -> data);
                 if (advancedFile_2.writeBytes(data)) {
                     return checkHash(advancedFile_2.readBytes(), true);
                 }
                 break;
             case ENABLE:
-                AdvancedFile advancedFile_with_suffix_1 = null;
-                AdvancedFile advancedFile_without_suffix_1 = null;
-                if (advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED)) {
-                    advancedFile_with_suffix_1 = advancedFile;
-                    advancedFile_without_suffix_1 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length()));
-                } else {
-                    advancedFile_without_suffix_1 = advancedFile;
-                    advancedFile_with_suffix_1 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
-                }
+                final boolean endsWith_1 = advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED);
+                final AdvancedFile advancedFile_with_suffix_1 = endsWith_1 ? advancedFile : new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
+                final AdvancedFile advancedFile_without_suffix_1 = endsWith_1 ? new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length())) : advancedFile;
                 if (advancedFile_without_suffix_1.exists() && checkHash(advancedFile_without_suffix_1.readBytes())) {
                     return true;
                 }
@@ -140,46 +139,46 @@ public class FileOverride extends AbstractOverride {
                 }
                 if (overridePolicy != OverridePolicy.FORCE && advancedFile_without_suffix_1.exists()) {
                     if (checkHash(advancedFile_without_suffix_1.readBytes())) {
+                        Log.addActionIfEnabled(advancedFile_with_suffix_1, () -> (advancedFile_with_suffix_1.exists() ? advancedFile_with_suffix_1.readBytes() : null), () -> null);
                         return advancedFile_with_suffix_1.delete();
                     } else if (overridePolicy != OverridePolicy.ALLOW) {
                         return false;
                     }
                 }
-                data = advancedFile_with_suffix_1.readBytes();
-                if (advancedFile_without_suffix_1.writeBytes(data)) {
-                    checkHash(advancedFile_without_suffix_1.readBytes(), HashUtil.hashSHA256(data), true);
+                final byte[] data_1 = advancedFile_with_suffix_1.readBytes();
+                Log.addActionIfEnabled(advancedFile_without_suffix_1, () -> (advancedFile_without_suffix_1.exists() ? advancedFile_without_suffix_1.readBytes() : null), () -> data_1);
+                if (advancedFile_without_suffix_1.writeBytes(data_1)) {
+                    checkHash(advancedFile_without_suffix_1.readBytes(), HashUtil.hashSHA256(data_1), true);
+                    Log.addActionIfEnabled(advancedFile_with_suffix_1, () -> (advancedFile_with_suffix_1.exists() ? advancedFile_with_suffix_1.readBytes() : null), () -> null);
                     return advancedFile_with_suffix_1.delete();
                 } else {
                     return false;
                 }
             case DISABLE:
-                AdvancedFile advancedFile_with_suffix_2 = null;
-                AdvancedFile advancedFile_without_suffix_2 = null;
-                if (advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED)) {
-                    advancedFile_with_suffix_2 = advancedFile;
-                    advancedFile_without_suffix_2 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length()));
-                } else {
-                    advancedFile_without_suffix_2 = advancedFile;
-                    advancedFile_with_suffix_2 = new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
-                }
+                final boolean endsWith_2 = advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED);
+                final AdvancedFile advancedFile_with_suffix_2 = endsWith_2 ? advancedFile : new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
+                final AdvancedFile advancedFile_without_suffix_2 = endsWith_2 ? new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length())) : advancedFile;
                 if (!advancedFile_without_suffix_2.exists()) {
                     return true;
                 }
                 if (overridePolicy != OverridePolicy.FORCE && advancedFile_with_suffix_2.exists()) {
                     if (checkHash(advancedFile_with_suffix_2.readBytes())) {
+                        Log.addActionIfEnabled(advancedFile_without_suffix_2, () -> (advancedFile_without_suffix_2.exists() ? advancedFile_without_suffix_2.readBytes() : null), () -> null);
                         return advancedFile_without_suffix_2.delete();
                     } else if (overridePolicy != OverridePolicy.ALLOW) {
                         return false;
                     }
                 }
-                data = advancedFile_without_suffix_2.readBytes();
-                if (advancedFile_with_suffix_2.writeBytes(data)) {
-                    checkHash(advancedFile_with_suffix_2.readBytes(), HashUtil.hashSHA256(data), true);
+                final byte[] data_2 = advancedFile_without_suffix_2.readBytes();
+                Log.addActionIfEnabled(advancedFile_with_suffix_2, () -> (advancedFile_with_suffix_2.exists() ? advancedFile_with_suffix_2.readBytes() : null), () -> data_2);
+                if (advancedFile_with_suffix_2.writeBytes(data_2)) {
+                    checkHash(advancedFile_with_suffix_2.readBytes(), HashUtil.hashSHA256(data_2), true);
+                    Log.addActionIfEnabled(advancedFile_without_suffix_2, () -> (advancedFile_without_suffix_2.exists() ? advancedFile_without_suffix_2.readBytes() : null), () -> null);
                     return advancedFile_without_suffix_2.delete();
                 } else {
                     return false;
                 }
-            case CHANGE:
+            case CHANGE: //TODO Use the IncrementalData etc, and the change can be saved as the byte array representation of the DeltaData
                 throw new NotYetImplementedRuntimeException("Maybe never?");
             case UNKNOWN:
             default:

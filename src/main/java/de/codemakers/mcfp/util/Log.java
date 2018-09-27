@@ -19,6 +19,7 @@ package de.codemakers.mcfp.util;
 
 import de.codemakers.base.logger.Logger;
 import de.codemakers.base.os.OSUtil;
+import de.codemakers.base.util.tough.ToughSupplier;
 import de.codemakers.io.file.AdvancedFile;
 
 import java.util.Base64;
@@ -65,6 +66,12 @@ public class Log {
         } catch (Exception ex) {
             Logger.handleError(ex);
             return false;
+        }
+    }
+    
+    public static void addActionIfEnabled(AdvancedFile advancedFile, ToughSupplier<byte[]> data_old, ToughSupplier<byte[]> data_new) {
+        if (LOG_ENABLE) {
+            addAction(advancedFile, data_old.getWithoutException(), data_new.getWithoutException());
         }
     }
     
