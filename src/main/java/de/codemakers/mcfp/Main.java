@@ -38,6 +38,7 @@ public class Main {
     private static AdvancedFile MINECRAFT_RESOURCES_FOLDER = null;
     
     public static final void main(String[] args) { //TODO Maybe create a reusable log file? A log file, which contains every operation done by this program, so it can be easily reversed when needed
+        Logger.DEFAULT_ADVANCED_LEVELED_LOGGER.setLogFormat("%4$s: %1$s"); //TODO Debug only
         Logger.log("This is the " + Main.class.getSimpleName() + " class", LogLevel.FINEST);
         if (args != null) {
             if (args.length > 0) {
