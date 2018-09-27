@@ -23,7 +23,6 @@ import de.codemakers.base.util.tough.ToughSupplier;
 import de.codemakers.io.file.AdvancedFile;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Queue;
@@ -54,7 +53,7 @@ public class Log {
             return false;
         }
         try {
-            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(advancedFile.createInputStreamWithoutException()));
+            final BufferedReader bufferedReader = advancedFile.createBufferedReader();
             final boolean done = bufferedReader.lines().allMatch(Log::reverseAction);
             bufferedReader.close();
             return done;
