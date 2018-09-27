@@ -22,6 +22,8 @@ import de.codemakers.base.os.OSUtil;
 import de.codemakers.base.util.tough.ToughSupplier;
 import de.codemakers.io.file.AdvancedFile;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Queue;
@@ -36,8 +38,8 @@ public class Log {
     
     public static final Queue<String> ACTIONS = new ConcurrentLinkedQueue<>();
     
-    public static final String LOG_FORMAT_STRING = "FILE:%s:OLD:%s:NEW:%s";
-    public static final String LOG_REGEX_STRING = "FILE:(.+):OLD:(.*):NEW:(.*)";
+    public static final String LOG_FORMAT_STRING = "FILE:\"%s\":OLD:%s:NEW:%s";
+    public static final String LOG_REGEX_STRING = "FILE:\"(.+)\":OLD:(.*):NEW:(.*)";
     public static final Pattern LOG_REGEX_PATTERN = Pattern.compile(LOG_REGEX_STRING);
     
     public static String actionToString(AdvancedFile advancedFile, byte[] data_old, byte[] data_new) {
@@ -45,6 +47,21 @@ public class Log {
             return null;
         }
         return String.format(LOG_FORMAT_STRING, advancedFile.getAbsolutePath(), data_old == null ? "" : Base64.getEncoder().encodeToString(data_old), data_new == null ? "" : Base64.getEncoder().encodeToString(data_new));
+    }
+    
+    public static boolean reverseActions(AdvancedFile advancedFile) {
+        if (advancedFile == null) {
+            return false;
+        }
+        try {
+            final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(advancedFile.createInputStreamWithoutException()));
+            final boolean done = bufferedReader.lines().allMatch(Log::reverseAction);
+            bufferedReader.close();
+            return done;
+        } catch (Exception ex) {
+            Logger.handleError(ex);
+            return false;
+        }
     }
     
     public static boolean reverseAction(String action) {

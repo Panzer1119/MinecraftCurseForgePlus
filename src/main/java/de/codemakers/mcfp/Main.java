@@ -23,6 +23,7 @@ import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.mcfp.entities.FileOverride;
 import de.codemakers.mcfp.entities.OverridePolicy;
 import de.codemakers.mcfp.entities.Overrides;
+import de.codemakers.mcfp.util.Log;
 
 public class Main {
     
@@ -36,6 +37,7 @@ public class Main {
     private static AdvancedFile MINECRAFT_CONFIG_FOLDER = null;
     private static AdvancedFile MINECRAFT_SCRIPTS_FOLDER = null;
     private static AdvancedFile MINECRAFT_RESOURCES_FOLDER = null;
+    private static AdvancedFile LOG_FILE = null;
     
     public static final void main(String[] args) { //TODO Maybe create a reusable log file? A log file, which contains every operation done by this program, so it can be easily reversed when needed
         Logger.DEFAULT_ADVANCED_LEVELED_LOGGER.setLogFormat("%4$s: %1$s"); //TODO Debug only
@@ -49,6 +51,10 @@ public class Main {
                 Logger.log(String.format("Minecraft Scripts Folder: \"%s\" (absolute: \"%s\")", getMinecraftScriptsFolder(), getMinecraftScriptsFolder().getAbsolutePath()), LogLevel.FINER);
                 Logger.log(String.format("Minecraft Resources Folder: \"%s\" (absolute: \"%s\")", getMinecraftResourcesFolder(), getMinecraftResourcesFolder().getAbsolutePath()), LogLevel.FINER);
             }
+            if (args.length > 2) {
+                LOG_FILE = new AdvancedFile(args[2]);
+                Log.LOG_ENABLE = true;
+            }
             if (args.length > 1) {
                 FileOverride.SHOW_DATA_IN_BASE64_BEFORE_REMOVING_MODS = true; //TODO Debug only??
                 final AdvancedFile json = new AdvancedFile(args[1]);
@@ -56,6 +62,7 @@ public class Main {
                 final Overrides overrides = Overrides.fromAdvancedFile(json);
                 Logger.log(String.format("Overrides: %s", overrides), LogLevel.FINE); //TODO Debug only
                 overrides.performOverridesWithoutException(OverridePolicy.ALLOW, false, (abstractOverride) -> Logger.log(String.format("Performed: %s", abstractOverride), LogLevel.FINE));
+                Log.saveActionsToFile(LOG_FILE);
             }
         }
     }
