@@ -17,6 +17,7 @@
 
 package de.codemakers.mcfp.util;
 
+import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
 import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.security.util.HashUtil;
 
@@ -49,6 +50,10 @@ public class Util {
                 }
             }
         }
+    }
+    
+    public static String generateOverrideJSON(AdvancedFile advancedFile_original, AdvancedFile advancedFile_modified) {
+        throw new NotYetImplementedRuntimeException();
     }
     
 }
