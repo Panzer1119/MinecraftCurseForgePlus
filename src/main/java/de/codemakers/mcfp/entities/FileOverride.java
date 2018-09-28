@@ -88,10 +88,11 @@ public class FileOverride extends AbstractOverride {
         }
         switch (getOverrideAction()) {
             case ADD:
+            case CHANGE:
                 if (overridePolicy != OverridePolicy.FORCE && advancedFile.exists()) {
                     if (checkHash(advancedFile.readBytes())) {
                         return true;
-                    } else if (overridePolicy != OverridePolicy.ALLOW) {
+                    } else if (getOverrideAction() == OverrideAction.ADD && overridePolicy != OverridePolicy.ALLOW) {
                         return false;
                     }
                 }
@@ -176,18 +177,6 @@ public class FileOverride extends AbstractOverride {
                     return advancedFile_without_suffix_2.delete();
                 } else {
                     return false;
-                }
-            case CHANGE: //TODO Use the IncrementalData etc, and the change can be saved as the byte array representation of the DeltaData
-                if (overridePolicy != OverridePolicy.FORCE && advancedFile.exists()) {
-                    if (checkHash(advancedFile.readBytes())) {
-                        return true;
-                    }/* else if (overridePolicy != OverridePolicy.ALLOW) { //e.g. configs might already exist, but should be overridden anyway, so OverridePolicy.ALLOW is not needed
-                        return false;
-                    }*/
-                }
-                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data);
-                if (advancedFile.writeBytes(data)) {
-                    return checkHash(advancedFile.readBytes(), true);
                 }
             case UNKNOWN:
             default:
