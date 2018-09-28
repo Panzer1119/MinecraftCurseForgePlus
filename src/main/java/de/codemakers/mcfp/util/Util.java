@@ -25,8 +25,11 @@ import de.codemakers.mcfp.entities.FileOverride;
 import de.codemakers.mcfp.entities.OverrideAction;
 import de.codemakers.mcfp.entities.Overrides;
 import de.codemakers.security.util.HashUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Util {
@@ -135,6 +138,7 @@ public class Util {
         // Mods
         // ===========================================================================================
         // ===========================================================================================
+        //TODO Add recognition of OverrideAction.REPLACE of mods (new version etc.)
         for (String original : hashes_original_mods.keySet().stream().sorted().collect(Collectors.toList())) {
             if (used_original.contains(original) || hashes_modified_mods.containsKey(original)) {
                 continue;
@@ -161,6 +165,30 @@ public class Util {
             }
             if (renamed) {
                 used_original.add(original);
+            }
+        }
+        //
+        for (String modified : hashes_modified_mods.keySet()) {
+            final int path_count = StringUtils.countMatches(modified, OSUtil.CURRENT_OS_HELPER.getFileSeparator());
+            String lowest_difference = modified;
+            String lowest_difference_name = modified;
+            for (String original : hashes_original_mods.keySet()) {
+                if (path_count != StringUtils.countMatches(original, OSUtil.CURRENT_OS_HELPER.getFileSeparator())) {
+                    continue;
+                }
+                final String temp = StringUtils.difference(original, modified);
+                if (lowest_difference.length() > temp.length()) {
+                    lowest_difference = temp;
+                    lowest_difference_name = original;
+                }
+            }
+            if (lowest_difference_name != modified && lowest_difference_name.contains(getFirstChars(modified))) {
+                System.out.println(String.format("SIMILAR MOD NAMES: \"%s\" -> \"%s\" (%s)", lowest_difference_name, modified, lowest_difference));
+                overrides.getModOverrides().add(new FileOverride(addHashes ? hashes_modified_mods.get(modified) : null, null, OverrideAction.REPLACE, modified, includeData ? ("data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_mods, modified).readBytesWithoutException())) : null, null, lowest_difference_name));
+                used_modified.add(modified);
+                used_original.add(lowest_difference_name);
+            } else {
+                System.out.println(String.format("FOUND NO SIMILAR MOD NAME FOR \"%s\"", modified));
             }
         }
         //
@@ -356,6 +384,26 @@ public class Util {
             return;
         }
         advancedFile_folder.listFiles(true).stream().filter(AdvancedFile::isFile).filter((advancedFile) -> !advancedFile.getName().equals(".DS_Store")).forEach((advancedFile) -> hashes.put(advancedFile.getPath().substring(advancedFile_folder.getPath().length() + 1, advancedFile.getPath().length()), Base64.getEncoder().encodeToString(HashUtil.hashSHA256(advancedFile.readBytesWithoutException()))));
+    }
+    
+    public static final String REGEX = "([A-Za-z]+)(?:-|[0-9]).*";
+    public static final Pattern PATTERN = Pattern.compile(REGEX);
+    
+    static String getName(String path) {
+        final int index = path.lastIndexOf(OSUtil.CURRENT_OS_HELPER.getFileSeparator());
+        if (index != -1) {
+            return path.substring(index + OSUtil.CURRENT_OS_HELPER.getFileSeparator().length());
+        }
+        return path;
+    }
+    
+    static String getFirstChars(String path) {
+        final String name = getName(path);
+        final Matcher matcher = PATTERN.matcher(name);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+        return name;
     }
     
 }

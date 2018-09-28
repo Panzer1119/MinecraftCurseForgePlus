@@ -29,7 +29,8 @@ public class GeneratorTest {
         final AdvancedFile advancedFile_minecraft_original = new AdvancedFile(args[0]);
         final AdvancedFile advancedFile_minecraft_modified = new AdvancedFile(args[1]);
         final AdvancedFile advancedFile_overrides_json = new AdvancedFile(args[2]);
-        final Overrides overrides = Util.generateOverrides(advancedFile_minecraft_original, advancedFile_minecraft_modified, false);
+        final boolean includeData = args.length > 3 ? Boolean.parseBoolean(args[3]) : false;
+        final Overrides overrides = Util.generateOverrides(advancedFile_minecraft_original, advancedFile_minecraft_modified, false, includeData);
         System.out.println(overrides);
         System.out.println();
         System.out.println();
@@ -47,7 +48,7 @@ public class GeneratorTest {
         };
         gsonBuilder.registerTypeAdapter(FileOverride.class, jsonSerializer);
         final String json = gsonBuilder.create().toJson(overrides);
-        System.out.println(json);
+        //System.out.println(json);
         advancedFile_overrides_json.writeBytesWithoutException(json.getBytes());
     }
     
