@@ -17,7 +17,6 @@
 
 package de.codemakers.mcfp.entities;
 
-import de.codemakers.base.exceptions.NotYetImplementedRuntimeException;
 import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
 import de.codemakers.io.file.AdvancedFile;
@@ -179,7 +178,17 @@ public class FileOverride extends AbstractOverride {
                     return false;
                 }
             case CHANGE: //TODO Use the IncrementalData etc, and the change can be saved as the byte array representation of the DeltaData
-                throw new NotYetImplementedRuntimeException("Maybe never?");
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile.exists()) {
+                    if (checkHash(advancedFile.readBytes())) {
+                        return true;
+                    }/* else if (overridePolicy != OverridePolicy.ALLOW) { //e.g. configs might already exist, but should be overridden anyway, so OverridePolicy.ALLOW is not needed
+                        return false;
+                    }*/
+                }
+                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data);
+                if (advancedFile.writeBytes(data)) {
+                    return checkHash(advancedFile.readBytes(), true);
+                }
             case UNKNOWN:
             default:
                 throw new UnsupportedOperationException();
