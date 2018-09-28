@@ -182,7 +182,7 @@ public class Util {
                     lowest_difference_name = original;
                 }
             }
-            if (lowest_difference_name != modified && lowest_difference_name.startsWith(getFirstChars(modified))) {
+            if (!Objects.equals(lowest_difference_name, modified) && lowest_difference_name.startsWith(getFirstChars(modified))) {
                 System.out.println(String.format("SIMILAR MOD NAMES: \"%s\" -> \"%s\" (%s)", lowest_difference_name, modified, lowest_difference));
                 overrides.getModOverrides().add(new FileOverride(addHashes ? hashes_modified_mods.get(modified) : null, null, OverrideAction.REPLACE, modified, includeData ? ("data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_mods, modified).readBytesWithoutException())) : null, null, lowest_difference_name));
                 used_modified.add(modified);
