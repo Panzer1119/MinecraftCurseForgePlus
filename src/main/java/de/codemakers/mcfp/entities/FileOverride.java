@@ -97,6 +97,7 @@ public class FileOverride extends AbstractOverride {
                     }
                 }
                 Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data);
+                //FIXME Maybe getParent().mkdirs() ???? and then this needs to be logged too
                 if (advancedFile.writeBytes(data)) {
                     return checkHash(advancedFile.readBytes(), true);
                 }
@@ -126,6 +127,9 @@ public class FileOverride extends AbstractOverride {
                 if (advancedFile_2.writeBytes(data)) {
                     return checkHash(advancedFile_2.readBytes(), true);
                 }
+                break;
+            case RENAME:
+                //TODO Implement
                 break;
             case ENABLE:
                 final boolean endsWith_1 = advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED);

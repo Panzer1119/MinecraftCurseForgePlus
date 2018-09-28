@@ -23,6 +23,7 @@ public enum OverrideAction {
     ADD("add"),
     REMOVE("remove"),
     REPLACE("replace"),
+    RENAME("rename"),
     ENABLE("enable"),
     DISABLE("disable"),
     CHANGE("change"),

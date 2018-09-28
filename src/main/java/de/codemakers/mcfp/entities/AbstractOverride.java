@@ -270,6 +270,10 @@ public abstract class AbstractOverride {
         return temp;
     }
     
+    public final SourceType getSourceType() {
+        return sourceType;
+    }
+    
     public boolean isOverrideType(OverrideType overrideType) {
         return Objects.equals(overrideType, getOverrideType());
     }
