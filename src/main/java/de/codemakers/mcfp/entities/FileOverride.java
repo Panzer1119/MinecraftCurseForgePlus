@@ -129,7 +129,20 @@ public class FileOverride extends AbstractOverride {
                 }
                 break;
             case RENAME:
-                //TODO Implement
+            case COPY:
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile.exists()) {
+                    if (checkHash(advancedFile.readBytes())) {
+                        return true;
+                    } else if (overridePolicy != OverridePolicy.ALLOW) {
+                        return false;
+                    }
+                }
+                final byte[] data_ = advancedFile_2.readBytes();
+                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data_);
+                if (advancedFile.writeBytes(data_)) {
+                    checkHash(advancedFile.readBytes(), true);
+                    return getOverrideAction() == OverrideAction.COPY || advancedFile_2.delete();
+                }
                 break;
             case ENABLE:
                 final boolean endsWith_1 = advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED);

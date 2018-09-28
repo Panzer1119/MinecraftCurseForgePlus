@@ -1,13 +1,21 @@
 {
   "modOverrides": [
     {
-      "hash": "SB9swFERQ8zdfi0bG5T68KcAqLSc0Tkipwta4orKqMU=",
+      "file_2": "mod_original_same.txt",
+      "overrideAction": "RENAME",
+      "file": "mod_modified_same.txt"
+    },
+    {
+      "file_2": "mod_original_same.txt",
+      "overrideAction": "COPY",
+      "file": "mod_modified_same_2.txt"
+    },
+    {
       "overrideAction": "CHANGE",
       "file": "1_o/mod_original_deep_changed.txt",
       "source": "data:NjU0MzIx"
     },
     {
-      "hash": "jZae727K08KaOmKSgOaGzww/XVqGr/PKEgIMkjrcbJI=",
       "overrideAction": "CHANGE",
       "file": "mod_original_changed.txt",
       "source": "data:MTIzNDU2"
@@ -21,13 +29,15 @@
       "file": "mod_original_delete.txt"
     },
     {
-      "hash": "2fmQmemzZz9G8ttlD1JDwqYOxYQSCqPxbZM7jqVLTC0=",
+      "overrideAction": "REMOVE",
+      "file": "mod_original_same_2.txt"
+    },
+    {
       "overrideAction": "ADD",
       "file": "mod_modified_added.txt",
       "source": "data:bW9kX21vZGlmaWVkX2FkZGVk"
     },
     {
-      "hash": "BkyEz7z2QM1CtQmpd2lbOyGpW1BiAVB3vvydXjoEahs=",
       "overrideAction": "ADD",
       "file": "1_m/mod_modified_deep_added.txt",
       "source": "data:bW9kX21vZGlmaWVkX2RlZXBfYWRkZWQ="

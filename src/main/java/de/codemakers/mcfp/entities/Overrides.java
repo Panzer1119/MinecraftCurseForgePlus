@@ -27,6 +27,7 @@ import de.codemakers.mcfp.util.Util;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Overrides {
     
@@ -172,7 +173,17 @@ public class Overrides {
     }
     
     public boolean performOverrides(OverridePolicy overridePolicy, boolean returnOnFailedOverrides, ToughConsumer<AbstractOverride> successfulOverride) throws Exception {
-        for (AbstractOverride abstractOverride : getOverrides()) {
+        final List<AbstractOverride> overrides = getOverrides();
+        for (AbstractOverride abstractOverride : overrides.stream().filter((override) -> override.getOverrideAction() == OverrideAction.COPY).collect(Collectors.toList())) {
+            if (!abstractOverride.performOverride(overridePolicy)) {
+                if (returnOnFailedOverrides) {
+                    return false;
+                }
+            } else if (successfulOverride != null) {
+                successfulOverride.acceptWithoutException(abstractOverride);
+            }
+        }
+        for (AbstractOverride abstractOverride : overrides.stream().filter((override) -> override.getOverrideAction() != OverrideAction.COPY).collect(Collectors.toList())) {
             if (!abstractOverride.performOverride(overridePolicy)) {
                 if (returnOnFailedOverrides) {
                     return false;

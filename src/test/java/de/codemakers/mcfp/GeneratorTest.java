@@ -29,7 +29,7 @@ public class GeneratorTest {
         final AdvancedFile advancedFile_minecraft_original = new AdvancedFile(args[0]);
         final AdvancedFile advancedFile_minecraft_modified = new AdvancedFile(args[1]);
         final AdvancedFile advancedFile_overrides_json = new AdvancedFile(args[2]);
-        final Overrides overrides = Util.generateOverrides(advancedFile_minecraft_original, advancedFile_minecraft_modified);
+        final Overrides overrides = Util.generateOverrides(advancedFile_minecraft_original, advancedFile_minecraft_modified, false);
         System.out.println(overrides);
         System.out.println();
         System.out.println();

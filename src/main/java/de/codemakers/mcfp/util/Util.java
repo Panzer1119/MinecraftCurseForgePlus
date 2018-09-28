@@ -26,6 +26,7 @@ import de.codemakers.mcfp.entities.Overrides;
 import de.codemakers.security.util.HashUtil;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Util {
     
@@ -55,7 +56,7 @@ public class Util {
         }
     }
     
-    public static String generateOverridesJSON(AdvancedFile advancedFile_minecraft_original, AdvancedFile advancedFile_minecraft_modified) {
+    public static String generateOverridesJSON(AdvancedFile advancedFile_minecraft_original, AdvancedFile advancedFile_minecraft_modified, boolean addHashes) {
         final Gson gson = new GsonBuilder().create();
         final GsonBuilder gsonBuilder = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting();
         final JsonSerializer<FileOverride> jsonSerializer = (src, typeOfSrc, context) -> {
@@ -67,22 +68,22 @@ public class Util {
             return jsonObject;
         };
         gsonBuilder.registerTypeAdapter(FileOverride.class, jsonSerializer);
-        return gsonBuilder.create().toJson(generateOverrides(advancedFile_minecraft_original, advancedFile_minecraft_modified));
+        return gsonBuilder.create().toJson(generateOverrides(advancedFile_minecraft_original, advancedFile_minecraft_modified, addHashes));
     }
     
-    public static Overrides generateOverrides(AdvancedFile advancedFile_minecraft_original, AdvancedFile advancedFile_minecraft_modified) {
+    public static Overrides generateOverrides(AdvancedFile advancedFile_minecraft_original, AdvancedFile advancedFile_minecraft_modified, boolean addHashes) {
         System.out.println(advancedFile_minecraft_original);
         System.out.println(advancedFile_minecraft_modified);
         final Overrides overrides = new Overrides(null, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         System.out.println(overrides);
-        final Map<String, byte[]> hashes_original_mods = new HashMap<>();
-        final Map<String, byte[]> hashes_modified_mods = new HashMap<>();
-        final Map<String, byte[]> hashes_original_config = new HashMap<>();
-        final Map<String, byte[]> hashes_modified_config = new HashMap<>();
-        final Map<String, byte[]> hashes_original_scripts = new HashMap<>();
-        final Map<String, byte[]> hashes_modified_scripts = new HashMap<>();
-        final Map<String, byte[]> hashes_original_resources = new HashMap<>();
-        final Map<String, byte[]> hashes_modified_resources = new HashMap<>();
+        final Map<String, String> hashes_original_mods = new HashMap<>();
+        final Map<String, String> hashes_modified_mods = new HashMap<>();
+        final Map<String, String> hashes_original_config = new HashMap<>();
+        final Map<String, String> hashes_modified_config = new HashMap<>();
+        final Map<String, String> hashes_original_scripts = new HashMap<>();
+        final Map<String, String> hashes_modified_scripts = new HashMap<>();
+        final Map<String, String> hashes_original_resources = new HashMap<>();
+        final Map<String, String> hashes_modified_resources = new HashMap<>();
         final AdvancedFile advancedFile_minecraft_original_mods = new AdvancedFile(advancedFile_minecraft_original, Main.MODS_FOLDER_NAME);
         final AdvancedFile advancedFile_minecraft_modified_mods = new AdvancedFile(advancedFile_minecraft_modified, Main.MODS_FOLDER_NAME);
         final AdvancedFile advancedFile_minecraft_original_config = new AdvancedFile(advancedFile_minecraft_original, Main.CONFIG_FOLDER_NAME);
@@ -107,84 +108,222 @@ public class Util {
         //System.out.println(hashes_original_resources);
         addHashesFromFolder(advancedFile_minecraft_modified_resources, hashes_modified_resources);
         //System.out.println(hashes_modified_resources);
+        final Set<String> used_original = new HashSet<>();
+        final Set<String> used_modified = new HashSet<>();
+        // ===========================================================================================
+        // ===========================================================================================
         // Mods
+        // ===========================================================================================
+        // ===========================================================================================
+        for (String original : hashes_original_mods.keySet().stream().sorted().collect(Collectors.toList())) {
+            if (used_original.contains(original)) {
+                continue;
+            }
+            final String hash_original = hashes_original_mods.get(original);
+            boolean renamed = false;
+            for (String modified : hashes_modified_mods.keySet().stream().sorted().collect(Collectors.toList())) {
+                if (used_modified.contains(modified)) {
+                    continue;
+                }
+                final String hash_modified = hashes_modified_mods.get(modified);
+                if (Objects.equals(hash_original, hash_modified) && !Objects.equals(original, modified)) {
+                    if (renamed) {
+                        overrides.getModOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.COPY, modified, null, null, original));
+                    } else {
+                        renamed = true;
+                        overrides.getModOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.RENAME, modified, null, null, original));
+                    }
+                    used_modified.add(modified);
+                }
+            }
+            if (renamed) {
+                used_original.add(original);
+            }
+        }
+        //
         for (String original : hashes_original_mods.keySet()) {
-            final byte[] hash_original = hashes_original_mods.get(original);
-            final byte[] hash_modified = hashes_modified_mods.get(original);
-            //System.out.println(String.format("Original \"%s\": hash_original=%s, hash_modified=%s", original, Arrays.toString(hash_original), Arrays.toString(hash_modified)));
+            final String hash_original = hashes_original_mods.get(original);
+            final String hash_modified = hashes_modified_mods.get(original);
+            if (used_original.contains(original)) {
+                continue;
+            }
             if (hash_modified == null) {
                 overrides.getModOverrides().add(new FileOverride(null, null, OverrideAction.REMOVE, original, null, null, null));
-            } else if (!Arrays.equals(hash_original, hash_modified)) {
-                overrides.getModOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_mods, original).readBytesWithoutException()), null, null));
+            } else if (!Objects.equals(hash_original, hash_modified)) {
+                overrides.getModOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_mods, original).readBytesWithoutException()), null, null));
             }
         }
         for (String modified : hashes_modified_mods.keySet()) {
-            final byte[] hash_modified = hashes_modified_mods.get(modified);
-            final byte[] hash_original = hashes_original_mods.get(modified);
-            //System.out.println(String.format("Modified \"%s\": hash_modified=%s, hash_original=%s", modified, Arrays.toString(hash_modified), Arrays.toString(hash_original)));
+            final String hash_modified = hashes_modified_mods.get(modified);
+            final String hash_original = hashes_original_mods.get(modified);
+            if (used_modified.contains(modified)) {
+                continue;
+            }
             if (hash_original == null) {
-                overrides.getModOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_mods, modified).readBytesWithoutException()), null, null));
+                overrides.getModOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_mods, modified).readBytesWithoutException()), null, null));
             }
         }
+        //
+        used_original.clear();
+        used_modified.clear();
+        // ===========================================================================================
+        // ===========================================================================================
         // Config
+        // ===========================================================================================
+        // ===========================================================================================
+        for (String original : hashes_original_config.keySet().stream().sorted().collect(Collectors.toList())) {
+            if (used_original.contains(original)) {
+                continue;
+            }
+            final String hash_original = hashes_original_config.get(original);
+            boolean renamed = false;
+            for (String modified : hashes_modified_config.keySet().stream().sorted().collect(Collectors.toList())) {
+                if (used_modified.contains(modified)) {
+                    continue;
+                }
+                final String hash_modified = hashes_modified_config.get(modified);
+                if (Objects.equals(hash_original, hash_modified) && !Objects.equals(original, modified)) {
+                    if (renamed) {
+                        overrides.getConfigOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.COPY, modified, null, null, original));
+                    } else {
+                        renamed = true;
+                        overrides.getConfigOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.RENAME, modified, null, null, original));
+                    }
+                    used_modified.add(modified);
+                }
+            }
+            if (renamed) {
+                used_original.add(original);
+            }
+        }
+        //
         for (String original : hashes_original_config.keySet()) {
-            final byte[] hash_original = hashes_original_config.get(original);
-            final byte[] hash_modified = hashes_modified_config.get(original);
+            final String hash_original = hashes_original_config.get(original);
+            final String hash_modified = hashes_modified_config.get(original);
             if (hash_modified == null) {
                 overrides.getConfigOverrides().add(new FileOverride(null, null, OverrideAction.REMOVE, original, null, null, null));
-            } else if (!Arrays.equals(hash_original, hash_modified)) {
-                overrides.getConfigOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_config, original).readBytesWithoutException()), null, null));
+            } else if (!Objects.equals(hash_original, hash_modified)) {
+                overrides.getConfigOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_config, original).readBytesWithoutException()), null, null));
             }
         }
         for (String modified : hashes_modified_config.keySet()) {
-            final byte[] hash_modified = hashes_modified_config.get(modified);
-            final byte[] hash_original = hashes_original_config.get(modified);
+            final String hash_modified = hashes_modified_config.get(modified);
+            final String hash_original = hashes_original_config.get(modified);
             if (hash_original == null) {
-                overrides.getConfigOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_config, modified).readBytesWithoutException()), null, null));
+                overrides.getConfigOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_config, modified).readBytesWithoutException()), null, null));
             }
         }
+        //
+        used_original.clear();
+        used_modified.clear();
+        // ===========================================================================================
+        // ===========================================================================================
         // Scripts
+        // ===========================================================================================
+        // ===========================================================================================
+        for (String original : hashes_original_scripts.keySet().stream().sorted().collect(Collectors.toList())) {
+            if (used_original.contains(original)) {
+                continue;
+            }
+            final String hash_original = hashes_original_scripts.get(original);
+            boolean renamed = false;
+            for (String modified : hashes_modified_scripts.keySet().stream().sorted().collect(Collectors.toList())) {
+                if (used_modified.contains(modified)) {
+                    continue;
+                }
+                final String hash_modified = hashes_modified_scripts.get(modified);
+                if (Objects.equals(hash_original, hash_modified) && !Objects.equals(original, modified)) {
+                    if (renamed) {
+                        overrides.getScriptOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.COPY, modified, null, null, original));
+                    } else {
+                        renamed = true;
+                        overrides.getScriptOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.RENAME, modified, null, null, original));
+                    }
+                    used_modified.add(modified);
+                }
+            }
+            if (renamed) {
+                used_original.add(original);
+            }
+        }
+        //
         for (String original : hashes_original_scripts.keySet()) {
-            final byte[] hash_original = hashes_original_scripts.get(original);
-            final byte[] hash_modified = hashes_modified_scripts.get(original);
+            final String hash_original = hashes_original_scripts.get(original);
+            final String hash_modified = hashes_modified_scripts.get(original);
             if (hash_modified == null) {
                 overrides.getScriptOverrides().add(new FileOverride(null, null, OverrideAction.REMOVE, original, null, null, null));
-            } else if (!Arrays.equals(hash_original, hash_modified)) {
-                overrides.getScriptOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_scripts, original).readBytesWithoutException()), null, null));
+            } else if (!Objects.equals(hash_original, hash_modified)) {
+                overrides.getScriptOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_scripts, original).readBytesWithoutException()), null, null));
             }
         }
         for (String modified : hashes_modified_scripts.keySet()) {
-            final byte[] hash_modified = hashes_modified_scripts.get(modified);
-            final byte[] hash_original = hashes_original_scripts.get(modified);
+            final String hash_modified = hashes_modified_scripts.get(modified);
+            final String hash_original = hashes_original_scripts.get(modified);
             if (hash_original == null) {
-                overrides.getScriptOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_scripts, modified).readBytesWithoutException()), null, null));
+                overrides.getScriptOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_scripts, modified).readBytesWithoutException()), null, null));
             }
         }
+        //
+        used_original.clear();
+        used_modified.clear();
+        // ===========================================================================================
+        // ===========================================================================================
         // Resources
+        // ===========================================================================================
+        // ===========================================================================================
+        for (String original : hashes_original_resources.keySet().stream().sorted().collect(Collectors.toList())) {
+            if (used_original.contains(original)) {
+                continue;
+            }
+            final String hash_original = hashes_original_resources.get(original);
+            boolean renamed = false;
+            for (String modified : hashes_modified_resources.keySet().stream().sorted().collect(Collectors.toList())) {
+                if (used_modified.contains(modified)) {
+                    continue;
+                }
+                final String hash_modified = hashes_modified_resources.get(modified);
+                if (Objects.equals(hash_original, hash_modified) && !Objects.equals(original, modified)) {
+                    if (renamed) {
+                        overrides.getResourceOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.COPY, modified, null, null, original));
+                    } else {
+                        renamed = true;
+                        overrides.getResourceOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.RENAME, modified, null, null, original));
+                    }
+                    used_modified.add(modified);
+                }
+            }
+            if (renamed) {
+                used_original.add(original);
+            }
+        }
+        //
         for (String original : hashes_original_resources.keySet()) {
-            final byte[] hash_original = hashes_original_resources.get(original);
-            final byte[] hash_modified = hashes_modified_resources.get(original);
+            final String hash_original = hashes_original_resources.get(original);
+            final String hash_modified = hashes_modified_resources.get(original);
             if (hash_modified == null) {
                 overrides.getResourceOverrides().add(new FileOverride(null, null, OverrideAction.REMOVE, original, null, null, null));
-            } else if (!Arrays.equals(hash_original, hash_modified)) {
-                overrides.getResourceOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_resources, original).readBytesWithoutException()), null, null));
+            } else if (!Objects.equals(hash_original, hash_modified)) {
+                overrides.getResourceOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.CHANGE, original, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_resources, original).readBytesWithoutException()), null, null));
             }
         }
         for (String modified : hashes_modified_resources.keySet()) {
-            final byte[] hash_modified = hashes_modified_resources.get(modified);
-            final byte[] hash_original = hashes_original_resources.get(modified);
+            final String hash_modified = hashes_modified_resources.get(modified);
+            final String hash_original = hashes_original_resources.get(modified);
             if (hash_original == null) {
-                overrides.getResourceOverrides().add(new FileOverride(hash_modified == null ? null : Base64.getEncoder().encodeToString(hash_modified), null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_resources, modified).readBytesWithoutException()), null, null));
+                overrides.getResourceOverrides().add(new FileOverride(addHashes ? hash_modified : null, null, OverrideAction.ADD, modified, "data:" + Base64.getEncoder().encodeToString(new AdvancedFile(advancedFile_minecraft_modified_resources, modified).readBytesWithoutException()), null, null));
             }
         }
+        //
+        used_original.clear();
+        used_modified.clear();
         return overrides;
     }
     
-    static void addHashesFromFolder(AdvancedFile advancedFile_folder, Map<String, byte[]> hashes) {
+    static void addHashesFromFolder(AdvancedFile advancedFile_folder, Map<String, String> hashes) {
         if (advancedFile_folder == null || !advancedFile_folder.exists() || !advancedFile_folder.isDirectory()) {
             return;
         }
-        advancedFile_folder.listFiles(true).stream().filter(AdvancedFile::isFile).filter((advancedFile) -> !advancedFile.getName().equals(".DS_Store")).forEach((advancedFile) -> hashes.put(advancedFile.getPath().substring(advancedFile_folder.getPath().length() + 1, advancedFile.getPath().length()), HashUtil.hashSHA256(advancedFile.readBytesWithoutException())));
+        advancedFile_folder.listFiles(true).stream().filter(AdvancedFile::isFile).filter((advancedFile) -> !advancedFile.getName().equals(".DS_Store")).forEach((advancedFile) -> hashes.put(advancedFile.getPath().substring(advancedFile_folder.getPath().length() + 1, advancedFile.getPath().length()), Base64.getEncoder().encodeToString(HashUtil.hashSHA256(advancedFile.readBytesWithoutException()))));
     }
     
 }

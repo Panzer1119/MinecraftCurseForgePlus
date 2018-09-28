@@ -24,6 +24,7 @@ public enum OverrideAction {
     REMOVE("remove"),
     REPLACE("replace"),
     RENAME("rename"),
+    COPY("copy"),
     ENABLE("enable"),
     DISABLE("disable"),
     CHANGE("change"),
