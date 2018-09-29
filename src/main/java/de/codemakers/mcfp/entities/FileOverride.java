@@ -19,13 +19,17 @@ package de.codemakers.mcfp.entities;
 
 import de.codemakers.base.logger.LogLevel;
 import de.codemakers.base.logger.Logger;
+import de.codemakers.base.os.OSUtil;
 import de.codemakers.io.file.AdvancedFile;
 import de.codemakers.io.file.exceptions.isnot.FileIsNotFileRuntimeException;
 import de.codemakers.mcfp.Main;
 import de.codemakers.mcfp.util.Log;
+import de.codemakers.mcfp.util.Util;
 import de.codemakers.security.util.HashUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Base64;
+import java.util.Objects;
 
 public class FileOverride extends AbstractOverride {
     
@@ -46,6 +50,24 @@ public class FileOverride extends AbstractOverride {
     public FileOverride setFile_2(String file_2) {
         this.file_2 = file_2;
         return this;
+    }
+    
+    public AdvancedFile getFolder() {
+        switch (getOverrideType()) {
+            case MOD:
+                return Main.getMinecraftModsFolder();
+            case CONFIG:
+                return Main.getMinecraftConfigFolder();
+            case SCRIPT:
+                return Main.getMinecraftScriptsFolder();
+            case RESOURCE:
+                return Main.getMinecraftResourcesFolder();
+            case CUSTOM:
+                return Main.getMinecraftFolder();
+            case UNKNOWN:
+                return null;
+        }
+        return null;
     }
     
     @Override
@@ -70,15 +92,17 @@ public class FileOverride extends AbstractOverride {
             if (source == null) {
                 throw new IllegalArgumentException("source may not be null");
             }
+            /*
             if (isOverrideAction(OverrideAction.REPLACE)) {
-                if (file_2 == null) {
+                if (file_2 == null) { //If that is null, assume, that every file should be replaced, which look like this
                     throw new IllegalArgumentException("file_2 may not be null");
                 }
             }
+            */
         }
         final byte[] data = needsData ? resolveSource() : null;
-        final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file);
-        final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(Main.getMinecraftModsFolder(), file_2);
+        final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(getFolder(), file);
+        final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(getFolder(), file_2);
         AdvancedFile advancedFile_temp = null;
         if (advancedFile != null && advancedFile.exists() && !advancedFile.isFile()) {
             throw new FileIsNotFileRuntimeException(advancedFile.getAbsolutePath() + " has to be a file");
@@ -98,6 +122,7 @@ public class FileOverride extends AbstractOverride {
                 }
                 Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data);
                 //FIXME Maybe getParent().mkdirs() ???? and then this needs to be logged too
+                advancedFile.getParentFile().mkdirs();
                 if (advancedFile.writeBytes(data)) {
                     return checkHash(advancedFile.readBytes(), true);
                 }
@@ -112,20 +137,40 @@ public class FileOverride extends AbstractOverride {
                 Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> null);
                 return advancedFile.delete();
             case REPLACE:
-                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> null);
-                if (advancedFile.exists() && !advancedFile.delete()) {
-                    return false;
+                if (advancedFile_2 != null) {
+                    if (advancedFile_2.exists()) {
+                        Log.addActionIfEnabled(advancedFile_2, () -> (advancedFile_2.exists() ? advancedFile_2.readBytes() : null), () -> null);
+                        if (!advancedFile_2.delete()) {
+                            return false;
+                        }
+                    }
+                } else {
+                    final AdvancedFile advancedFile_folder = getFolder();
+                    final String modified = advancedFile.getAbsolutePath().substring(advancedFile_folder.getAbsolutePath().length() + 1, advancedFile.getAbsolutePath().length());
+                    final int path_count = StringUtils.countMatches(modified, OSUtil.CURRENT_OS_HELPER.getFileSeparator());
+                    for (AdvancedFile advancedFile_original : advancedFile_folder.listFiles(true)) {
+                        final String original = advancedFile_original.getAbsolutePath().substring(advancedFile_folder.getAbsolutePath().length() + 1, advancedFile_original.getAbsolutePath().length());
+                        if (path_count != StringUtils.countMatches(original, OSUtil.CURRENT_OS_HELPER.getFileSeparator())) {
+                            continue;
+                        }
+                        if (!Objects.equals(original, modified) && original.startsWith(Util.getFirstChars(modified))) {
+                            System.out.println(String.format("SIMILAR MOD NAMES: \"%s\" -> \"%s\" (%s)", original, modified, StringUtils.difference(modified, original)));
+                            //advancedFile_original.delete(); //TODO Test this
+                        } else {
+                            System.out.println(String.format("FOUND NO SIMILAR MOD NAME FOR \"%s\"", modified));
+                        }
+                    }
                 }
-                if (overridePolicy != OverridePolicy.FORCE && advancedFile_2.exists()) {
-                    if (checkHash(advancedFile_2.readBytes())) {
+                if (overridePolicy != OverridePolicy.FORCE && advancedFile.exists()) {
+                    if (checkHash(advancedFile.readBytes())) {
                         return true;
                     } else if (overridePolicy != OverridePolicy.ALLOW) {
                         return false;
                     }
                 }
-                Log.addActionIfEnabled(advancedFile_2, () -> (advancedFile_2.exists() ? advancedFile_2.readBytes() : null), () -> data);
-                if (advancedFile_2.writeBytes(data)) {
-                    return checkHash(advancedFile_2.readBytes(), true);
+                Log.addActionIfEnabled(advancedFile, () -> (advancedFile.exists() ? advancedFile.readBytes() : null), () -> data);
+                if (advancedFile.writeBytes(data)) {
+                    return checkHash(advancedFile.readBytes(), true);
                 }
                 break;
             case RENAME:
@@ -146,8 +191,8 @@ public class FileOverride extends AbstractOverride {
                 break;
             case ENABLE:
                 final boolean endsWith_1 = advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED);
-                final AdvancedFile advancedFile_with_suffix_1 = endsWith_1 ? advancedFile : new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
-                final AdvancedFile advancedFile_without_suffix_1 = endsWith_1 ? new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length())) : advancedFile;
+                final AdvancedFile advancedFile_with_suffix_1 = endsWith_1 ? advancedFile : new AdvancedFile(getFolder(), advancedFile.getName() + SUFFIX_DISABLED);
+                final AdvancedFile advancedFile_without_suffix_1 = endsWith_1 ? new AdvancedFile(getFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length())) : advancedFile;
                 if (advancedFile_without_suffix_1.exists() && checkHash(advancedFile_without_suffix_1.readBytes())) {
                     return true;
                 }
@@ -173,8 +218,8 @@ public class FileOverride extends AbstractOverride {
                 }
             case DISABLE:
                 final boolean endsWith_2 = advancedFile.getName().toLowerCase().endsWith(SUFFIX_DISABLED);
-                final AdvancedFile advancedFile_with_suffix_2 = endsWith_2 ? advancedFile : new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName() + SUFFIX_DISABLED);
-                final AdvancedFile advancedFile_without_suffix_2 = endsWith_2 ? new AdvancedFile(Main.getMinecraftModsFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length())) : advancedFile;
+                final AdvancedFile advancedFile_with_suffix_2 = endsWith_2 ? advancedFile : new AdvancedFile(getFolder(), advancedFile.getName() + SUFFIX_DISABLED);
+                final AdvancedFile advancedFile_without_suffix_2 = endsWith_2 ? new AdvancedFile(getFolder(), advancedFile.getName().substring(0, advancedFile.getName().length() - SUFFIX_DISABLED.length())) : advancedFile;
                 if (!advancedFile_without_suffix_2.exists()) {
                     return true;
                 }
@@ -204,7 +249,7 @@ public class FileOverride extends AbstractOverride {
     
     @Override
     byte[] getSourceFromFileIntern(String file) {
-        return new AdvancedFile(Main.getMinecraftModsFolder(), file).readBytesWithoutException();
+        return new AdvancedFile(getFolder(), file).readBytesWithoutException();
     }
     
     @Override

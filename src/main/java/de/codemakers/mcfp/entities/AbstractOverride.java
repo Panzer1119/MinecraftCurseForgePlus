@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 public abstract class AbstractOverride {
     
     public static final String SUFFIX_DISABLED = ".disabled";
-    public static final String SOURCE_REGEX_STRING = "(" + SourceType.URL.getType() + "|" + SourceType.FILE.getType() + "|" + SourceType.DATA.getType() + "):(.+)";
+    public static final String SOURCE_REGEX_STRING = "(" + SourceType.URL.getType() + "|" + SourceType.FILE.getType() + "|" + SourceType.DATA.getType() + "):(.*)";
     public static final Pattern SOURCE_REGEX_PATTERN = Pattern.compile(SOURCE_REGEX_STRING);
     
     protected String hash;

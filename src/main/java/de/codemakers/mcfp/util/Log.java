@@ -23,6 +23,7 @@ import de.codemakers.base.util.tough.ToughSupplier;
 import de.codemakers.io.file.AdvancedFile;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Queue;
@@ -40,6 +41,8 @@ public class Log {
     public static final String LOG_FORMAT_STRING = "FILE:\"%s\":OLD:%s:NEW:%s";
     public static final String LOG_REGEX_STRING = "FILE:\"(.+)\":OLD:(.*):NEW:(.*)";
     public static final Pattern LOG_REGEX_PATTERN = Pattern.compile(LOG_REGEX_STRING);
+    
+    public static AdvancedFile LOG_FILE = null;
     
     public static String actionToString(AdvancedFile advancedFile, byte[] data_old, byte[] data_new) {
         if (advancedFile == null) {
@@ -92,7 +95,19 @@ public class Log {
     }
     
     public static void addAction(AdvancedFile advancedFile, byte[] data_old, byte[] data_new) {
-        ACTIONS.add(actionToString(advancedFile, data_old, data_new));
+        final String action = actionToString(advancedFile, data_old, data_new);
+        ACTIONS.add(action);
+        if (LOG_FILE != null) {
+            try {
+                final BufferedWriter bufferedWriter = LOG_FILE.createBufferedWriter(true);
+                bufferedWriter.write(action);
+                bufferedWriter.newLine();
+                bufferedWriter.flush();
+                bufferedWriter.close();
+            } catch (Exception ex) {
+                Logger.handleError(ex);
+            }
+        }
     }
     
     public static void saveActionsToFile(AdvancedFile advancedFile) {

@@ -138,7 +138,6 @@ public class Util {
         // Mods
         // ===========================================================================================
         // ===========================================================================================
-        //TODO Add recognition of OverrideAction.REPLACE of mods (new version etc.)
         for (String original : hashes_original_mods.keySet().stream().sorted().collect(Collectors.toList())) {
             if (used_original.contains(original) || hashes_modified_mods.containsKey(original)) {
                 continue;
@@ -389,7 +388,7 @@ public class Util {
     public static final String REGEX = "([A-Za-z]+)(?:-|[0-9]).*";
     public static final Pattern PATTERN = Pattern.compile(REGEX);
     
-    static String getName(String path) {
+    public static String getName(String path) {
         final int index = path.lastIndexOf(OSUtil.CURRENT_OS_HELPER.getFileSeparator());
         if (index != -1) {
             return path.substring(index + OSUtil.CURRENT_OS_HELPER.getFileSeparator().length());
@@ -397,7 +396,7 @@ public class Util {
         return path;
     }
     
-    static String getFirstChars(String path) {
+    public static String getFirstChars(String path) {
         final String name = getName(path);
         final Matcher matcher = PATTERN.matcher(name);
         if (matcher.matches()) {
