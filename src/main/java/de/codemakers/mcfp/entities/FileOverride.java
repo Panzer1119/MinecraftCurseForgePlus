@@ -254,7 +254,7 @@ public class FileOverride extends AbstractOverride {
     
     @Override
     public String toString() {
-        return "FileOverride{" + "overrideType=" + overrideType + ", file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + ", sourceType=" + sourceType + '}';
+        return "FileOverride{" + "overrideType=" + overrideType + ", file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + " (" + getSourceWithOptions() + ")" + ", sourceType=" + sourceType + '}';
     }
     
 }

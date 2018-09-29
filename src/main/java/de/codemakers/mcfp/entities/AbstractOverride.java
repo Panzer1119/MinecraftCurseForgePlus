@@ -35,6 +35,8 @@ public abstract class AbstractOverride {
     public static final String SUFFIX_DISABLED = ".disabled";
     public static final String SOURCE_REGEX_STRING = "(" + SourceType.URL.getType() + "|" + SourceType.FILE.getType() + "|" + SourceType.DATA.getType() + "):(.*)";
     public static final Pattern SOURCE_REGEX_PATTERN = Pattern.compile(SOURCE_REGEX_STRING);
+    public static final String OPTION_REGEX_STRING = "\\{([A-Za-z0-9_]*)\\}";
+    public static final Pattern OPTION_REGEX_PATTERN = Pattern.compile(OPTION_REGEX_STRING);
     
     protected String hash;
     protected OverridePolicy overridePolicy;
@@ -43,6 +45,7 @@ public abstract class AbstractOverride {
     protected String source = null;
     protected transient SourceType sourceType = null;
     //temp
+    protected Overrides overrides = null;
     protected transient byte[] temp = null;
     
     public AbstractOverride(String hash, OverridePolicy overridePolicy, OverrideAction overrideAction, String file, String source, byte[] temp) {
@@ -176,11 +179,18 @@ public abstract class AbstractOverride {
         return this;
     }
     
-    public final String getSource() {
+    public String getSourceWithOptions() {
+        if (getSource() == null) {
+            return null;
+        }
+        return replaceOptions(getSource());
+    }
+    
+    public String getSource() {
         return source;
     }
     
-    public final AbstractOverride setSource(String source) {
+    public AbstractOverride setSource(String source) {
         this.source = source;
         this.sourceType = null;
         this.temp = null;
@@ -214,14 +224,14 @@ public abstract class AbstractOverride {
     }
     
     public URL sourceToURL() throws MalformedURLException {
-        if (source == null || sourceType != SourceType.URL) {
+        if (getSourceWithOptions() == null || sourceType != SourceType.URL) {
             return null;
         }
-        return new URL(source);
+        return new URL(getSourceWithOptions());
     }
     
     public byte[] getSourceFromURL() {
-        if (source == null || sourceType != SourceType.URL) {
+        if (getSourceWithOptions() == null || sourceType != SourceType.URL) {
             return null;
         }
         try {
@@ -233,24 +243,24 @@ public abstract class AbstractOverride {
     }
     
     public byte[] getSourceFromData() {
-        if (source == null || sourceType != SourceType.DATA) {
+        if (getSourceWithOptions() == null || sourceType != SourceType.DATA) {
             return null;
         }
-        return Base64.getDecoder().decode(source);
+        return Base64.getDecoder().decode(getSourceWithOptions());
     }
     
     abstract byte[] getSourceFromFileIntern(String file);
     
     public byte[] getSourceFromFile() {
-        if (source == null || sourceType != SourceType.FILE) {
+        if (getSourceWithOptions() == null || sourceType != SourceType.FILE) {
             return null;
         }
-        return getSourceFromFileIntern(source);
+        return getSourceFromFileIntern(getSourceWithOptions());
     }
     
     public byte[] resolveSource() {
         if (temp == null) {
-            if (source == null) {
+            if (getSourceWithOptions() == null) {
                 return null;
             }
             switch (sourceType) {
@@ -282,14 +292,34 @@ public abstract class AbstractOverride {
         return Objects.equals(overrideAction, getOverrideAction());
     }
     
-    
     public boolean isOverride(Class<? extends AbstractOverride> clazz) {
         return getClass().equals(clazz) /*clazz != null && AbstractOverride.class.isAssignableFrom(clazz)*/;
     }
     
+    public String replaceOptions(String string) {
+        return replaceOptions(string, "");
+    }
+    
+    public String replaceOptions(String string, String defaultValue) {
+        return replaceOptions(overrides, string, defaultValue);
+    }
+    
+    public static String replaceOptions(Overrides overrides, String string) {
+        return replaceOptions(overrides, string, "");
+    }
+    
+    public static String replaceOptions(Overrides overrides, String string, String defaultValue) {
+        Matcher matcher = OPTION_REGEX_PATTERN.matcher(string);
+        while (matcher.find()) {
+            string = matcher.replaceFirst(overrides.getValueOrDefault(matcher.group(1), defaultValue));
+            matcher = OPTION_REGEX_PATTERN.matcher(string);
+        }
+        return string;
+    }
+    
     @Override
     public String toString() {
-        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + ", sourceType=" + sourceType + '}';
+        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + " (" + getSourceWithOptions() + ")" + ", sourceType=" + sourceType + '}';
     }
     
 }

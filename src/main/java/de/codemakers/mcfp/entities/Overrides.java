@@ -37,6 +37,7 @@ public class Overrides {
     protected List<FileOverride> scriptOverrides;
     protected List<FileOverride> resourceOverrides;
     protected List<FileOverride> customOverrides;
+    protected Map<String, String> options;
     //temp
     protected transient List<AbstractOverride> overrides = null;
     
@@ -52,19 +53,39 @@ public class Overrides {
     
     public Overrides init() {
         if (modOverrides != null && !modOverrides.isEmpty()) {
-            modOverrides.forEach((fileOverride) -> fileOverride.setOverrideType(OverrideType.MOD));
+            modOverrides.forEach((fileOverride) -> {
+                fileOverride.setOverrideType(OverrideType.MOD);
+                fileOverride.overrides = this;
+            });
         }
         if (configOverrides != null && !configOverrides.isEmpty()) {
-            configOverrides.forEach((fileOverride) -> fileOverride.setOverrideType(OverrideType.CONFIG));
+            configOverrides.forEach((fileOverride) -> {
+                fileOverride.setOverrideType(OverrideType.CONFIG);
+                fileOverride.overrides = this;
+            });
         }
         if (scriptOverrides != null && !scriptOverrides.isEmpty()) {
-            scriptOverrides.forEach((fileOverride) -> fileOverride.setOverrideType(OverrideType.SCRIPT));
+            scriptOverrides.forEach((fileOverride) -> {
+                fileOverride.setOverrideType(OverrideType.SCRIPT);
+                fileOverride.overrides = this;
+            });
         }
         if (resourceOverrides != null && !resourceOverrides.isEmpty()) {
-            resourceOverrides.forEach((fileOverride) -> fileOverride.setOverrideType(OverrideType.RESOURCE));
+            resourceOverrides.forEach((fileOverride) -> {
+                fileOverride.setOverrideType(OverrideType.RESOURCE);
+                fileOverride.overrides = this;
+            });
         }
         if (customOverrides != null && !customOverrides.isEmpty()) {
-            customOverrides.forEach((fileOverride) -> fileOverride.setOverrideType(OverrideType.CUSTOM));
+            customOverrides.forEach((fileOverride) -> {
+                fileOverride.setOverrideType(OverrideType.CUSTOM);
+                fileOverride.overrides = this;
+            });
+        }
+        if (options == null) {
+            options = new HashMap<>();
+        } else {
+            options.keySet().forEach((key) -> options.put(key, AbstractOverride.replaceOptions(this, options.get(key), options.get(key))));
         }
         return this;
     }
@@ -149,6 +170,19 @@ public class Overrides {
         return this;
     }
     
+    public Map<String, String> getOptions() {
+        return options;
+    }
+    
+    public String getValue(String key) {
+        return options.get(key);
+    }
+    
+    public String getValueOrDefault(String key, String defaultValue) {
+        final String value = getValue(key);
+        return value == null ? defaultValue : value;
+    }
+    
     public List<AbstractOverride> getOverrides() {
         if (overrides == null) {
             final List<AbstractOverride> temp = new ArrayList<>();
@@ -224,7 +258,7 @@ public class Overrides {
     
     @Override
     public String toString() {
-        return "Overrides{" + "hash='" + hash + '\'' + ", modOverrides=" + modOverrides + ", configOverrides=" + configOverrides + ", scriptOverrides=" + scriptOverrides + ", resourceOverrides=" + resourceOverrides + ", customOverrides=" + customOverrides + ", overrides=" + overrides + '}';
+        return "Overrides{" + "hash='" + hash + '\'' + ", modOverrides=" + modOverrides + ", configOverrides=" + configOverrides + ", scriptOverrides=" + scriptOverrides + ", resourceOverrides=" + resourceOverrides + ", customOverrides=" + customOverrides + ", options=" + options + ", overrides=" + overrides + '}';
     }
     
     public static Overrides fromJSON(String json) {

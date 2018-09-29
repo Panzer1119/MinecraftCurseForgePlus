@@ -41,8 +41,8 @@ public class GeneratorTest {
         final JsonSerializer<FileOverride> jsonSerializer = (src, typeOfSrc, context) -> {
             final JsonElement jsonElement = gson.toJsonTree(src, typeOfSrc);
             final JsonObject jsonObject = jsonElement.getAsJsonObject();
-            if (jsonObject.has("source")) {
-                jsonObject.addProperty("source", (src.getSourceType() == null ? null : (src.getSourceType().getType() + ":" + src.getSource())));
+            if (jsonObject.has("source") && src.getSourceType() != null) {
+                jsonObject.addProperty("source", src.getSourceType().getType() + ":" + src.getSource());
             }
             return jsonObject;
         };
