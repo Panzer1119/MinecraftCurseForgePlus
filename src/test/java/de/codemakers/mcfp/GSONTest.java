@@ -30,7 +30,7 @@ public class GSONTest {
         System.out.println("This is a Test class");
         final GsonBuilder gsonBuilder = new GsonBuilder();
         final Gson gson = gsonBuilder.create();
-        final Overrides overrides = gson.fromJson(new FileReader(new File("src/test/resources/test_overrides.json")), Overrides.class);
+        final Overrides overrides = gson.fromJson(new FileReader(new File("src/test/resources/test_overrides.json")), Overrides.class).init();
         System.out.println(overrides);
     }
     

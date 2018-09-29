@@ -170,6 +170,13 @@ public abstract class AbstractOverride {
         return this;
     }
     
+    public String getFileWithOptions() {
+        if (getFile() == null) {
+            return null;
+        }
+        return replaceOptions(getFile());
+    }
+    
     public String getFile() {
         return file;
     }
@@ -309,6 +316,10 @@ public abstract class AbstractOverride {
     }
     
     public static String replaceOptions(Overrides overrides, String string, String defaultValue) {
+        if (string == null) {
+            return null;
+        }
+        Objects.requireNonNull(defaultValue);
         Matcher matcher = OPTION_REGEX_PATTERN.matcher(string);
         while (matcher.find()) {
             string = matcher.replaceFirst(overrides.getValueOrDefault(matcher.group(1), defaultValue));
@@ -319,7 +330,7 @@ public abstract class AbstractOverride {
     
     @Override
     public String toString() {
-        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + " (" + getSourceWithOptions() + ")" + ", sourceType=" + sourceType + '}';
+        return "AbstractOverride{" + "hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + " (" + getFileWithOptions() + ")" + ", source='" + source + '\'' + " (" + getSourceWithOptions() + ")" + ", sourceType=" + sourceType + '}';
     }
     
 }

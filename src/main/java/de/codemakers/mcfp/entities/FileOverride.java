@@ -43,6 +43,13 @@ public class FileOverride extends AbstractOverride {
         this.file_2 = file_2;
     }
     
+    public String getFile_2WithOptions() {
+        if (getFile_2() == null) {
+            return null;
+        }
+        return replaceOptions(getFile_2());
+    }
+    
     public String getFile_2() {
         return file_2;
     }
@@ -101,8 +108,8 @@ public class FileOverride extends AbstractOverride {
             */
         }
         final byte[] data = needsData ? resolveSource() : null;
-        final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(getFolder(), file);
-        final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(getFolder(), file_2);
+        final AdvancedFile advancedFile = file == null ? null : new AdvancedFile(getFolder(), getFileWithOptions());
+        final AdvancedFile advancedFile_2 = file_2 == null ? null : new AdvancedFile(getFolder(), getFile_2WithOptions());
         AdvancedFile advancedFile_temp = null;
         if (advancedFile != null && advancedFile.exists() && !advancedFile.isFile()) {
             throw new FileIsNotFileRuntimeException(advancedFile.getAbsolutePath() + " has to be a file");
@@ -254,7 +261,7 @@ public class FileOverride extends AbstractOverride {
     
     @Override
     public String toString() {
-        return "FileOverride{" + "overrideType=" + overrideType + ", file_2='" + file_2 + '\'' + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + ", source='" + source + '\'' + " (" + getSourceWithOptions() + ")" + ", sourceType=" + sourceType + '}';
+        return "FileOverride{" + "overrideType=" + overrideType + ", file_2='" + file_2 + '\'' + " (" + getFile_2WithOptions() + ")" + ", hash='" + hash + '\'' + ", overridePolicy=" + overridePolicy + ", overrideAction=" + overrideAction + ", file='" + file + '\'' + " (" + getFileWithOptions() + ")" + ", source='" + source + '\'' + " (" + getSourceWithOptions() + ")" + ", sourceType=" + sourceType + '}';
     }
     
 }
