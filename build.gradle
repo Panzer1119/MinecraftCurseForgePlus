@@ -14,6 +14,6 @@ repositories {
 dependencies {
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
-    implementation 'com.github.Panzer1119:CJP-Base:v1.8.0_172-alpha.35'
+    implementation 'com.github.Panzer1119:CJP-Base:v1.8.0_172-alpha.36'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
